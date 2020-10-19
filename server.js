@@ -5,16 +5,41 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const passport = require('passport');
-const { Strategy } = require('passport-facebook');
+//const { Strategy } = require('passport-facebook');
+const { FacebookStrategy } = require('passport-facebook').Strategy;
+const { LinkedinStrategy } = require('passport-linkedin-oauth2').Strategy;
+const { GoogleStrategy } = require('passport-google-oauth20').OAuth2Strategy;
 const { FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET, SESSION_SECRET } =  process.env;
+const { LINKEDIN_API_KEY, LINKEDIN_SECRET_KEY, SESSION_SECRET } =  process.env;
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SESSION_SECRET } =  process.env;
 const port = process.env.PORT || 8000;
 const app = express();
 const routes = require('./routes');
 
-passport.use(new Strategy({
+passport.use(new FacebookStrategy({
     clientID: FACEBOOK_CLIENT_ID,
     clientSecret: FACEBOOK_CLIENT_SECRET,
-    callbackURL: '/return'
+    callbackURL: 'http://localhost:8000/auth/facebook/callback'
+  },
+  (accessToken, refreshToken, profile, cb) => {
+    return cb(null, profile);
+}));
+
+passport.use(new LinkedinStrategy({
+    clientID: LINKEDIN_API_KEY,
+    clientSecret: LINKEDIN_SECRET_KEY,
+    callbackURL: 'http://localhost:8000/auth/linkedin/callback',
+    scope: ['r_emailaddress', 'r_liteprofile'],
+    state: true
+  },
+  (accessToken, refreshToken, profile, cb) => {
+    return cb(null, profile);
+}));
+
+passport.use(new GoogleStrategy({
+    clientID: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    callbackURL: 'http://localhost:8000/auth/google/callback'
   },
   (accessToken, refreshToken, profile, cb) => {
     return cb(null, profile);
