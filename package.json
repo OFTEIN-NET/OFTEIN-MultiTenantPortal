@@ -4,7 +4,10 @@
   "description": "Node.js on Docker",
   "author": "Muhammad Usman usman@smartx.kr",
   "license": "MIT",
-
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smartx-usman/multi-tenant-portal-frontend"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
