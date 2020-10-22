@@ -1,4 +1,4 @@
-html, body {
+/*html, body {
     background: #EEF2F7;
     margin: 0;
     padding: 0;
@@ -11,7 +11,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
+}*/
 
 .btn-primary,
 .btn-primary:hover,

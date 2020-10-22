@@ -20,12 +20,6 @@ router.get('/logout', (req, res, next) => {
   res.redirect('/');
 });
 
-//router.get('/return', 
-//  passport.authenticate('facebook', { failureRedirect: '/' }),
-//  (req, res, next) => {
-//    res.redirect('/');
-//});
-
 router.get('/auth/facebook/callback',
   passport.authenticate('facebook', { failureRedirect: '/' }),
   (req, res, next) => {
