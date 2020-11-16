@@ -1,0 +1,26 @@
+{
+  "name": "multi-tenant-portal_app",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "Muhammad Usman usman@smartx.kr",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smartx-usman/multi-tenant-portal-frontend"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "ejs": "^3.0.1",
+    "express": "^4.17.1",
+    "express-session": "^1.17.0",
+    "passport": "^0.4.1",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-google-oauth": "~1.0.0",
+    "passport-linkedin-oauth2": "^2.0.0"
+  }
+}
