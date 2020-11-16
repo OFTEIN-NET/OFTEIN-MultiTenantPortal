@@ -1,4 +1,4 @@
-# mutli-tenant-portal-frontend
+# OF@TEIN++ Multi-Tenant-Portal Frontend App
 
 - [Practice Tutorial](https://gabrieleromanato.name/nodejs-social-login-in-expressjs-using-twitter-google-facebook-and-linkedin-with-passport)
 

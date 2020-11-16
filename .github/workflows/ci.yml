@@ -21,6 +21,7 @@ jobs:
         with:
           image: usman476/multi-tenant-portal-frontend
           dockerfile: frontend-app/Dockerfile
+          directory: frontend-app
           tag: latest
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
