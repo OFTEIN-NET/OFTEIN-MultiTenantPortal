@@ -1,3 +1,7 @@
+#Project Files
+.idea
+*.iml
+
 # Logs
 logs
 *.log
