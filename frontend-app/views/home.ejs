@@ -16,7 +16,7 @@
                 <img src="/public/images/avatar.png" class="w3-circle w3-margin-right" style="width:46px">
             </div>
             <div class="w3-col s8 w3-bar">
-                <span>Welcome, <strong><%= user.displayName %></strong></span><br>
+                <span>Welcome, <strong><%= user.displayName %> ID: <%= user.id %> </strong></span><br>
             </div>
         </div>
         <hr>
@@ -36,88 +36,88 @@
          title="close side menu" id="myOverlay"></div>
 
     <!-- !PAGE CONTENT! -->
-    <div class="w3-main" style="margin-left:300px;margin-top:43px;">
+<div class="w3-main" style="margin-left:300px;margin-top:43px;">
 
-        <!-- Header -->
-        <header class="w3-container" style="padding-top:22px">
-            <h5><b><i class="fa fa-dashboard"></i> <%= user.displayName %> Dashboard</b></h5>
-        </header>
+    <!-- Header -->
+    <header class="w3-container" style="padding-top:22px">
+        <h5><b><i class="fa fa-dashboard"></i> <%= user.displayName %> Dashboard</b></h5>
+    </header>
 
-        <div class="w3-row-padding w3-margin-bottom">
-            <div class="w3-container">
-                <h5>Previous deployments (Pods, Deployment, Service)</h5>
-                <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-                    <tr>
-                        <td>Deployment</td>
-                        <td>Success</td>
-                    </tr>
-                    <tr>
-                        <td>Pod</td>
-                        <td>Success</td>
-                    </tr>
-                    <tr>
-                        <td>Service</td>
-                        <td>Failed</td>
-                    </tr>
-                    <tr>
-                        <td>Pod</td>
-                        <td>Success</td>
-                    </tr>
-                </table>
-                <br>
+    <div class="w3-row-padding w3-margin-bottom">
+        <div class="w3-container">
+            <h5>Previous deployments (Pods, Deployment, Service)</h5>
+            <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+                <tr>
+                    <td>Deployment</td>
+                    <td>Success</td>
+                </tr>
+                <tr>
+                    <td>Pod</td>
+                    <td>Success</td>
+                </tr>
+                <tr>
+                    <td>Service</td>
+                    <td>Failed</td>
+                </tr>
+                <tr>
+                    <td>Pod</td>
+                    <td>Success</td>
+                </tr>
+            </table>
+            <br>
 
-            </div>
-            <hr>
-
-            <div class="w3-container">
-                <form name="deplyForm" action="/action_page.php" method="post">
-                    <label for="yamlFile">Select yaml file:</label>
-                    <input type="file" id="yamlFile" name="yamlFile" required><br><br>
-                    <label for="clusters">Select deployment cluster:</label>
-                    <select id="clusters">
-                        <option value="CHULA">CHULA-Thailand</option>
-                        <option value="GIST" selected>GIST-Korea</option>
-                        <option value="UM">UM-Malaysia</option>
-                    </select>
-                    <br><br><br>
-                    <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
-                </form>
-            </div>
         </div>
+        <hr>
 
-<% } %>
+        <div class="w3-container">
+            <form name="deplyForm" action="/action_page.php" method="post">
+                <label for="yamlFile">Select yaml file:</label>
+                <input type="file" id="yamlFile" name="yamlFile" required><br><br>
+                <label for="clusters">Select deployment cluster:</label>
+                <select id="clusters">
+                    <option value="CHULA">CHULA-Thailand</option>
+                    <option value="GIST" selected>GIST-Korea</option>
+                    <option value="UM">UM-Malaysia</option>
+                </select>
+                <br><br><br>
+                <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
+            </form>
+        </div>
+    </div>
 
-<script>
-    // Get the Sidebar
-    var mySidebar = document.getElementById("mySidebar");
+    <% } %>
 
-    // Get the DIV with overlay effect
-    var overlayBg = document.getElementById("myOverlay");
+    <script>
+        // Get the Sidebar
+        var mySidebar = document.getElementById("mySidebar");
 
-    // Toggle between showing and hiding the sidebar, and add overlay effect
-    function w3_open() {
-        if (mySidebar.style.display === 'block') {
-            mySidebar.style.display = 'none';
+        // Get the DIV with overlay effect
+        var overlayBg = document.getElementById("myOverlay");
+
+        // Toggle between showing and hiding the sidebar, and add overlay effect
+        function w3_open() {
+            if (mySidebar.style.display === 'block') {
+                mySidebar.style.display = 'none';
+                overlayBg.style.display = "none";
+            } else {
+                mySidebar.style.display = 'block';
+                overlayBg.style.display = "block";
+            }
+        }
+
+        // Close the sidebar with the close button
+        function w3_close() {
+            mySidebar.style.display = "none";
             overlayBg.style.display = "none";
-        } else {
-            mySidebar.style.display = 'block';
-            overlayBg.style.display = "block";
         }
-    }
 
-    // Close the sidebar with the close button
-    function w3_close() {
-        mySidebar.style.display = "none";
-        overlayBg.style.display = "none";
-    }
-
-    function validateForm() {
-        var yamlFile = document.forms["deplyForm"]["yamlFile"].value;
-        if (yamlFile == "" || yamlFile == null) {
-            alert("Yaml file must be selected.");
-            return false;
+        function validateForm() {
+            var yamlFile = document.forms["deplyForm"]["yamlFile"].value;
+            if (yamlFile == "" || yamlFile == null) {
+                alert("Yaml file must be selected.");
+                return false;
+            }
         }
-    }
-</script>
+    </script>
 
-<%- include('footer') %>
+    <%- include('footer') %>
