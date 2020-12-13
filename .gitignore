@@ -1,6 +1,7 @@
 #Project Files
 .idea
 *.iml
+.idea/*
 
 # Logs
 logs
@@ -106,3 +107,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Backend config
+backend-app/configs/*
