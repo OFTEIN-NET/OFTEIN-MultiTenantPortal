@@ -1,91 +1,56 @@
+# OFTEIN-Plusplus
 
-<h1>
-<p align="center">
-<strong> OFTEIN++ Backend Federation </strong>
-<p align="center">
-</h1> 
+`host`: https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters <br>
+`cluster`: `k3d_c1`, `k3d_c2`, `um`
 
-<h3>
-<p align="center">
-<strong> Proposed Design Architect </strong>
-<p align="center">
-</h3> 
- 
-<p align="center">
-  <img width="863" height="563" src="/pic/proposed pics.PNG"/>
-</p>
+Method | URL | Description | Payload | Params | Example
+--- | --- | --- | --- | --- | ---
+GET | `host`/clusters | view all clusters | - | - | [/clusters](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters)
+GET | `host`/clusters/`cluster` | view cluster | - | `cluster` | [/clusters/`k3d_c1`](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/k3d_c1)
+GET | `host`/clusters/`cluster`/pods | view all pods | - | `cluster` | [/clusters/`k3d_c1`/pods](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/k3d_c1/pods)
+POST | `host`/clusters/`cluster`/pods | create a pod | `yaml` | `cluster` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
+GET | `host`/clusters/`cluster`/pods/`pod` | view pod | - | `cluster`<br>`pod` | [/clusters/`k3d_c1`/pods/`nginx-test`](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/k3d_c1/pods/nginx-test)
+DELETE | `host`/clusters/`cluster`/pods/`pod` | delete pod | - | `cluster`<br>`pod` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
+GET | `host`/clusters/`cluster`/deployments | view all deployments | - | `cluster` | [/clusters/`k3d_c1`/deployments](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/k3d_c1/deployments)
+POST | `host`/clusters/`cluster`/deployments | create a deployment | `yaml` | `cluster` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
+GET | `host`/clusters/`cluster`/deployments/`deployment` | view deployment | - | `cluster`<br>`deployment` | [/clusters/`k3d_c1`/deployments/`nginx-deployment`](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/k3d_c1/deployments/nginx-deployments)
+DELETE | `host`/clusters/`cluster`/deployments/`deployment` | delete deployment | - | `cluster`<br>`deployment` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
 
+## Example Pod Yaml ([Demo](http://149.28.140.108:30002/))
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-test
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      ports:
+        - containerPort: 80
+          hostPort: 30002
+```
 
-&nbsp;  In our design, we need kubernetes token (please read instruction about K8S token) to launch workloads on the clusters 
-
-
-<h3>
-<p align="center">
-<strong> Getting Token.yml file  </strong>
-</p>
-</h3>
- 
-&nbsp; In order to get K8S Token 
-
-$ kubectl config view 
-
-this command will show K8S token (example .yml below)
-
-<strong> Note : the token.yml contains sensitive information (ie. K8S token) </strong>
-
-<strong> please don't share file on github </strong>
-
-<p align="center">
-  <img width="863" height="580" src="/pic/example_yaml.PNG"/>
-</p>
-
-<h3>
-<p align="center">
-<strong> How to use Backend federation api </strong>
-</p>
-</h3>
-
-&nbsp; in the /demo path
-
-&nbsp;  1. extract yaml files (ie. thai.yaml, Malaysia.yaml and korea.yaml)
-
-&nbsp;  2. install necessary libraries --> to install libraries
-            
-            $ npm install  
-
-&nbsp;  3. run server (in our demo we ran it locally) --> to run server :
-    
-            $ node index.js 
-
-&nbsp;  4. test it's working, or not ? 
-        
-        in internet browser just type url : http://localhost:3000/
-
-        this should show you Hello world!
-
-<p align="center">
-  <img width="863" height="80" src="/pic/hello_world.PNG"/>
-</p>
-&nbsp;
-        5. to launch workload in each cluster 
-        for example : we tried to launch k8s workload on Thailand cluster
-    
-        just use url : http://localhost:3000/thai/create in browser
-
-        if we take a look at Thailand Cluster 
-<p align="center">
-  <img width="863" height="480" src="/pic/success.PNG"/>
-</p>
-
-&nbsp;  we can see that workload was created 
-
-
-
-
-
-
-
- 
-
-
-
+## Example Deployment Yaml
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.14.2
+        ports:
+        - containerPort: 80
+          hostPort: 30003
+```
