@@ -2,7 +2,7 @@
 
 <% if (!user) { %>
     <section class="jumbotron container mt-5">
-        <h1>Multi-Tenant Portal Login</h1>
+        <h1>Multi-Tenant Portal Frontend Login</h1>
         <p class="mt-5"><a href="/login/facebook" class="loginBtn loginBtn--facebook">Login with Facebook</a></p>
         <p class="mt-5"><a href="/login/google" class="loginBtn loginBtn--google">Login with Google</a></p>
         <p class="mt-5"><a href="/login/linkedin" class="loginBtn loginBtn--linkedin">Login with Linkedin</a></p>
@@ -13,7 +13,7 @@
     <nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
         <div class="w3-container w3-row">
             <div class="w3-col s4">
-                <img src="/public/images/avatar.png" class="w3-circle w3-margin-right" style="width:46px">
+                <img src="public/images/avatar.png" class="w3-circle w3-margin-right" style="width:46px">
             </div>
             <div class="w3-col s8 w3-bar">
                 <span>Welcome, <strong><%= user.displayName %> ID: <%= user.id %> </strong></span><br>
@@ -45,35 +45,55 @@
 
     <div class="w3-row-padding w3-margin-bottom">
         <div class="w3-container">
-            <h5>Previous deployments (Pods, Deployment, Service)</h5>
+            <h4 style="color: blue">Kubernetes Cluster(s)</h4>
             <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                 <tr>
-                    <td>Deployment</td>
-                    <td>Success</td>
+                    <th>Cluster</th>
+                    <th>Cluster Status</th>
                 </tr>
+                <% Cluster_List.forEach(function(Cluster_List) { %>
+                    <tr>
+                        <td><%= Cluster_List.cluster %></td>
+                        <td
+                        <% if (Cluster_List.running = "true") { %>
+                            style="background-color:green;color:white;">
+                            Up
+                        </td>
+                        <% } else{ %>
+                            style="background-color:red;color:white;">
+                            Down
+                        <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+            </table>
+            <br><br><br>
+
+            <h4 style="color: blue">Running Deployments (Pods, Deployment, Service)</h4>
+            <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                 <tr>
-                    <td>Pod</td>
-                    <td>Success</td>
+                    <th>Kind</th>
+                    <th>Namespace</th>
+                    <th>Name</th>
                 </tr>
-                <tr>
-                    <td>Service</td>
-                    <td>Failed</td>
-                </tr>
-                <tr>
-                    <td>Pod</td>
-                    <td>Success</td>
-                </tr>
+                <% Pod_List.forEach(function(Pod_List) { %>
+                    <tr>
+                        <td><%= Pod_List.kind %></td>
+                        <td><%= Pod_List.name %></td>
+                        <td><%= Pod_List.namespace %> </td>
+                    </tr>
+                <% }); %>
             </table>
             <br>
-
         </div>
         <hr>
 
         <div class="w3-container">
+            <h4 style="color: blue">New Deployment (Pod, Deployment, Service)</h4>
             <form name="deplyForm" action="/action_page.php" method="post">
-                <label for="yamlFile">Select yaml file:</label>
+                <label for="yamlFile">Select YAML File:</label>
                 <input type="file" id="yamlFile" name="yamlFile" required><br><br>
-                <label for="clusters">Select deployment cluster:</label>
+                <label for="clusters">Select Deployment Cluster (Running):</label>
                 <select id="clusters">
                     <option value="CHULA">CHULA-Thailand</option>
                     <option value="GIST" selected>GIST-Korea</option>
