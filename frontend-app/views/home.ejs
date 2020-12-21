@@ -69,18 +69,36 @@
             </table>
             <br><br><br>
 
-            <h4 style="color: blue">Running Deployments (Pods, Deployment, Service)</h4>
+            <h4 style="color: blue">Running Deployments (Pods, Deployments, Services)</h4>
             <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                 <tr>
+                    <th>Cluster</th>
                     <th>Kind</th>
                     <th>Namespace</th>
                     <th>Name</th>
                 </tr>
-                <% Pod_List.forEach(function(Pod_List) { %>
+                <% GIST_Pod_List.forEach(function(GIST_Pod_List) { %>
                     <tr>
-                        <td><%= Pod_List.kind %></td>
-                        <td><%= Pod_List.name %></td>
-                        <td><%= Pod_List.namespace %> </td>
+                        <td>KR-GIST</td>
+                        <td><%= GIST_Pod_List.kind %></td>
+                        <td><%= GIST_Pod_List.name %></td>
+                        <td><%= GIST_Pod_List.namespace %> </td>
+                    </tr>
+                <% }); %>
+                <% UM_Pod_List.forEach(function(UM_Pod_List) { %>
+                    <tr>
+                        <td>MY-UM</td>
+                        <td><%= UM_Pod_List.kind %></td>
+                        <td><%= UM_Pod_List.name %></td>
+                        <td><%= UM_Pod_List.namespace %> </td>
+                    </tr>
+                <% }); %>
+                <% CHULA_Pod_List.forEach(function(CHULA_Pod_List) { %>
+                    <tr>
+                        <td>TH-CHULA</td>
+                        <td><%= CHULA_Pod_List.kind %></td>
+                        <td><%= CHULA_Pod_List.name %></td>
+                        <td><%= CHULA_Pod_List.namespace %> </td>
                     </tr>
                 <% }); %>
             </table>
@@ -90,14 +108,14 @@
 
         <div class="w3-container">
             <h4 style="color: blue">New Deployment (Pod, Deployment, Service)</h4>
-            <form name="deplyForm" action="/action_page.php" method="post">
+            <form name="deployForm" action="https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/" method="post">
                 <label for="yamlFile">Select YAML File:</label>
                 <input type="file" id="yamlFile" name="yamlFile" required><br><br>
                 <label for="clusters">Select Deployment Cluster (Running):</label>
                 <select id="clusters">
                     <option value="CHULA">CHULA-Thailand</option>
                     <option value="GIST" selected>GIST-Korea</option>
-                    <option value="UM">UM-Malaysia</option>
+                    <option value="um">UM-Malaysia</option>
                 </select>
                 <br><br><br>
                 <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
@@ -137,6 +155,10 @@
                 alert("Yaml file must be selected.");
                 return false;
             }
+        }
+
+        document.querySelector('deployform').onsubmit = function () {
+            this.setAttribute('action', "https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/" + document.querySelector('input[name=clusters]').value+"/pods")
         }
     </script>
 
