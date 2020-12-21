@@ -30,8 +30,8 @@ exports.plugin = {
             // "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
             // "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
             "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns"),
-            "k3d_c1": createApiNamespace('./configs/config_k3d_c1.yaml', "default"),
-            "k3d_c2": createApiNamespace('./configs/config_k3d_c2.yaml', "default")
+            "k3os1": createApiNamespace('./configs/k3os1.yaml', "default"),
+            "k3os2": createApiNamespace('./configs/k3os2.yaml', "default")
         };
 
         // Define Function
@@ -95,7 +95,7 @@ exports.plugin = {
 
         // error handling
         const handlek8serror = (error) => {
-            // console.log(error);
+            console.log(error);
             if (error.response) return new Boom.Boom(error.response.body.message, {
                 statusCode: error.response.statusCode
             })
@@ -279,6 +279,7 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
                     const yamlfile = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+                    console.log(yamlfile)
                     return createdeployment(request.params.cluster, yamlfile, request.query.dev)
                         .catch((error) => handlek8serror(error))
                 }
