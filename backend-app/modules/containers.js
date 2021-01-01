@@ -27,11 +27,9 @@ exports.plugin = {
         // Initialize All API connector
 
         let clusters = {
-            // "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
-            // "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
-            "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns"),
-            "k3os1": createApiNamespace('./configs/k3os1.yaml', "default"),
-            "k3os2": createApiNamespace('./configs/k3os2.yaml', "default")
+            "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
+            "gist": createApiNamespace('./configs/config_gist.yaml', "default"),
+            "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns")
         };
 
         // Define Function
@@ -44,6 +42,7 @@ exports.plugin = {
             }).catch((error) => {
                 running = false;
                 status = "down";
+                console.log(error)
                 if (error.response) status = error.response.statusMessage;
             });
             return {
@@ -197,7 +196,9 @@ exports.plugin = {
                     }
                 },
                 handler: async (request, h) => {
+                    console.log("OK")
                     const yamlfile = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+
                     return createpod(request.params.cluster, yamlfile, request.query.dev)
                         .catch((error) => handlek8serror(error))
                 }
