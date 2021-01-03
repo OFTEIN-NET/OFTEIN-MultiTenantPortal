@@ -3,10 +3,13 @@ exports.plugin = {
     once: true,
     register: async (server, options) => {
 
+        await server.register(require("../plugins/datastore"));
+
         const Joi = require('joi');
         const Yaml = require('js-yaml');
         const FS   = require('fs');
         const Boom = require('@hapi/boom');
+        const Datastore = server.app.datastore;
 
         const k8s = require('@kubernetes/client-node');
 
@@ -27,11 +30,9 @@ exports.plugin = {
         // Initialize All API connector
 
         let clusters = {
-            // "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
-            // "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
-            "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns"),
-            "k3d_c1": createApiNamespace('./configs/config_k3d_c1.yaml', "default"),
-            "k3d_c2": createApiNamespace('./configs/config_k3d_c2.yaml', "default")
+            "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
+            "gist": createApiNamespace('./configs/config_gist.yaml', "default"),
+            "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns")
         };
 
         // Define Function
@@ -44,6 +45,7 @@ exports.plugin = {
             }).catch((error) => {
                 running = false;
                 status = "down";
+                console.log(error)
                 if (error.response) status = error.response.statusMessage;
             });
             return {
@@ -95,7 +97,7 @@ exports.plugin = {
 
         // error handling
         const handlek8serror = (error) => {
-            // console.log(error);
+            console.log(error);
             if (error.response) return new Boom.Boom(error.response.body.message, {
                 statusCode: error.response.statusCode
             })
@@ -162,6 +164,98 @@ exports.plugin = {
                 }
             },
             {
+                path: "/v2/pods",
+                method: "GET",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            pagecursor: Joi.string(),
+                            limit: Joi.number().min(0).default(10).max(100),
+                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+                        return Datastore.getCollectionWithAutocomplete(
+                            "pods",
+                            request.query.limit,
+                            [
+                                ["user", "=", request.query.userid],
+                                ["cluster", "=", request.query.cluster]
+                            ],
+                            request.query.pagecursor)
+                            .then(async (result) => {
+                                await Promise.all(result.data.map(async (pod) => {
+                                    delete pod.yaml;
+                                    const res = await server.inject({
+                                        method: "GET",
+                                        url: `/clusters/${pod.cluster}/pods/${pod.name}`
+                                    });
+                                    pod.status = res.result;
+                                }));
+                                return result
+                            })
+
+                    } catch (err) {
+                        console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
+                path: "/v2/pods",
+                method: "PUT",
+                options: {
+                    payload: {
+                        maxBytes: 1024 * 1024 * 1,
+                        multipart: {output: "file"},
+                        parse: true
+                    },
+                    validate: {
+                        payload: Joi.object({
+                            yaml: Joi.any().meta({ swaggerType: "file" }).required()
+                        }),
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+                        let res = await server.inject({
+                            method: "POST",
+                            url: `/clusters/${request.query.cluster}/pods`,
+                            payload: request.payload
+                        });
+
+                        if (res.statusCode == "200") {
+                            const yaml = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+                            const pod = {
+                                cluster: request.query.cluster,
+                                user: request.query.userid,
+                                yaml: yaml,
+                                name: yaml.metadata.name,
+                                created: new Date()
+                            }
+                            await Datastore.initFromNewData(pod, "pods", server.app.id(10), [
+                                "cluster", "user", "created", "updated", "name"]).save()
+                        }
+
+                        return res.result
+                    } catch (err) {
+                        console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
                 path: "/clusters/{cluster}",
                 method: "GET",
                 options: {
@@ -197,7 +291,9 @@ exports.plugin = {
                     }
                 },
                 handler: async (request, h) => {
+
                     const yamlfile = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+
                     return createpod(request.params.cluster, yamlfile, request.query.dev)
                         .catch((error) => handlek8serror(error))
                 }
@@ -279,6 +375,7 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
                     const yamlfile = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+                    console.log(yamlfile)
                     return createdeployment(request.params.cluster, yamlfile, request.query.dev)
                         .catch((error) => handlek8serror(error))
                 }

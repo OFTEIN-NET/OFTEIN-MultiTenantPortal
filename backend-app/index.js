@@ -5,6 +5,7 @@ main = async () => {
         options: {abortEarly: true, stripUnknown: true},
         failAction: (request, h, error) => {
             let errors = {};
+            console.log(error);
             error.details.forEach((detail, i) => {
                 errorMessage = detail.message
 
