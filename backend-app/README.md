@@ -1,4 +1,9 @@
-# OFTEIN-Plusplus
+# OF@TEIN++ Multi-Tenant-Portal Backend App
+
+## Example Deployment in the Cloud
+
+The example deployment is running on the Google Cloud Platform and accessible 
+through this following information:
 
 `host`: https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app <br>
 `cluster`: `chula`, `gist`, `um`
@@ -31,7 +36,6 @@ Type | Description | Usecase | Used in
 Payload | <ul><li>passing data via "payload"</li><li>used for uploading file</li></ul> | yaml | <ul><li>[POST] /clusters/`cluster`/pods</li><li>[POST] /clusters/`cluster`/deployments</li></ul>
 Param | <ul><li>passing data via "URL"</li><li>always required | pod, deployment, cluster</li></ul> | <ul><li>[GET] /clusters </li><li>[GET] /clusters/`cluster`</li><li>[GET] /clusters/`cluster`/pods</li><li>[POST] /clusters/`cluster`/pods</li><li>[GET] /clusters/`cluster`/pods/`pod`</li><li>[DELETE] /clusters/`cluster`/pods/`pod`</li><li>[GET] /clusters/`cluster`/deployments</li><li>[POST] /clusters/`cluster`/deployments</li><li>[GET] /clusters/`cluster`/deployments/`deployment`</li><li>[DELETE] /clusters/`cluster`/deployments/`deployment`</li></ul>
 Query | <ul><li>passing data via "URL" for optional parameter</li><li>required some cases</li></ul> | limit, pagecursor <br> cluster, userid| <ul><li>[GET] /v2/pods </li><li>[PUT] /v2/pods </li></ul>
-
 
 ## Example Pod Yaml ([Demo](http://45.76.155.138:30002/))
 ```yaml
