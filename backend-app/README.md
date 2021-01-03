@@ -1,4 +1,9 @@
-# OFTEIN-Plusplus
+# OF@TEIN++ Multi-Tenant-Portal Backend App
+
+## Example Deployment in the Cloud
+
+The example deployment is running on the Google Cloud Platform and accessible 
+through this following information:
 
 `host`: https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters <br>
 `cluster`: `k3d_c1`, `k3d_c2`, `um`
@@ -16,7 +21,10 @@ POST | `host`/clusters/`cluster`/deployments | create a deployment | `yaml` | `c
 GET | `host`/clusters/`cluster`/deployments/`deployment` | view deployment | - | `cluster`<br>`deployment` | [/clusters/`k3d_c1`/deployments/`nginx-deployment`](https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/k3d_c1/deployments/nginx-deployments)
 DELETE | `host`/clusters/`cluster`/deployments/`deployment` | delete deployment | - | `cluster`<br>`deployment` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
 
-## Example Pod Yaml ([Demo](http://149.28.140.108:30002/))
+If you want to build your own deployment in Google Cloud Platform please check
+[here](README_Deployment.md)
+
+## Example Pod Yaml
 ```yaml
 apiVersion: v1
 kind: Pod

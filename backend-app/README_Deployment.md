@@ -1,4 +1,4 @@
-# OFTEIN-Plusplus
+# Backend App Deployment in Google Cloud Platform
 
 ### To deploy on cloudrun
 ##### Push container on google registry
