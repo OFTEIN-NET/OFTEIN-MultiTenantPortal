@@ -217,12 +217,12 @@ exports.plugin = {
                     },
                     validate: {
                         payload: Joi.object({
-                            yaml: Joi.any().meta({ swaggerType: "file" }).required(),
-                            userid: Joi.string().required(),
-                            cluster: Joi.string().valid(...Object.keys(clusters))
+                            yaml: Joi.any().meta({ swaggerType: "file" }).required()
                         }),
                         query: Joi.object({
-                            dev: Joi.boolean().default(false)
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters))
                         })
                     }
                 },
@@ -230,15 +230,15 @@ exports.plugin = {
                     try {
                         let res = await server.inject({
                             method: "POST",
-                            url: `/clusters/${request.payload.cluster}/pods`,
+                            url: `/clusters/${request.query.cluster}/pods`,
                             payload: request.payload
                         });
 
                         if (res.statusCode == "200") {
                             const yaml = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
                             const pod = {
-                                cluster: request.payload.cluster,
-                                user: request.payload.userid,
+                                cluster: request.query.cluster,
+                                user: request.query.userid,
                                 yaml: yaml,
                                 name: yaml.metadata.name,
                                 created: new Date()
