@@ -10,17 +10,15 @@ router.get('/', (req, res, next) => {
     var GIST_Pod_List='';
     var UM_Pod_List='';
     var CHULA_Pod_List='';
-    var Cluster_List /*= [
-        { cluster: 'KR-GIST', running: 'true' },
-        { cluster: 'MY-UM', running: 'false' },
-        { cluster: 'TH-CHULA', running: 'true' }
-    ]*/;
-    var backend_api_base_url = 'https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters';
-    var gist_cluster_pods_url = backend_api_base_url + '/k3os1/pods'
-    var chula_cluster_pods_url = backend_api_base_url + '/k3os2/pods'
-    var um_cluster_pods_url = backend_api_base_url + '/um/pods'
+    var Cluster_List;
+    var cluster_get_base_url = 'https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters';
+    var pods_get_base_url = 'https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/v2/pods?userid='+user.id+'&limit=50&cluster=';
+    console.log(pods_get_base_url)
+    var gist_cluster_pods_url = pods_get_base_url + 'gist'
+    var chula_cluster_pods_url = pods_get_base_url + 'chula'
+    var um_cluster_pods_url = pods_get_base_url + 'um'
 
-    fetch(backend_api_base_url)
+    fetch(cluster_get_base_url)
         .then(response => response.json())
         .then(cluster_json => {
             console.log(cluster_json);

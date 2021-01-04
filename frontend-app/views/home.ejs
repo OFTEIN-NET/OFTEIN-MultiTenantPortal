@@ -108,15 +108,17 @@
 
         <div class="w3-container">
             <h4 style="color: blue">New Deployment (Pod, Deployment, Service)</h4>
-            <form name="deployForm" action="https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/" method="post">
+            <form name="deployForm" action="https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/v2/pods"
+                  method="put" enctype="multipart/form-data">
                 <label for="yamlFile">Select YAML File:</label>
                 <input type="file" id="yamlFile" name="yamlFile" required><br><br>
-                <label for="clusters">Select Deployment Cluster (Running):</label>
-                <select id="clusters">
-                    <option value="CHULA">CHULA-Thailand</option>
-                    <option value="GIST" selected>GIST-Korea</option>
+                <label for="cluster">Select Deployment Cluster (Running):</label>
+                <select id="cluster">
+                    <option value="chula">CHULA-Thailand</option>
+                    <option value="gist" selected>GIST-Korea</option>
                     <option value="um">UM-Malaysia</option>
                 </select>
+                <input id="userid" name="userid" type="hidden" value="<%= user.id %>">
                 <br><br><br>
                 <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
             </form>
@@ -155,11 +157,9 @@
                 alert("Yaml file must be selected.");
                 return false;
             }
+            alert("Yaml file must be selected." + document.getElementById('userid').value);
         }
 
-        document.querySelector('deployform').onsubmit = function () {
-            this.setAttribute('action', "https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/" + document.querySelector('input[name=clusters]').value+"/pods")
-        }
     </script>
 
     <%- include('footer') %>
