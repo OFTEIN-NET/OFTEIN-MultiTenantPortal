@@ -28,12 +28,12 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - uses: mr-smithers-excellent/docker-build-push@v4
-          name: Build & push Back-end App Docker image
-          with:
-            image: usman476/multi-tenant-portal-backend
-            dockerfile: backend-app/Dockerfile
-            directory: backend-app
-            tag: latest
-            registry: docker.io
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
+        name: Build & push Back-end App Docker image
+        with:
+          image: usman476/multi-tenant-portal-backend
+          dockerfile: backend-app/Dockerfile
+          directory: backend-app
+          tag: latest
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
