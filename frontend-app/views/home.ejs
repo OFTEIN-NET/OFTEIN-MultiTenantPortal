@@ -8,34 +8,43 @@
         <p class="mt-5"><a href="/login/linkedin" class="loginBtn loginBtn--linkedin">Login with Linkedin</a></p>
     </section>
 <% } else { %>
-
-    <!-- Sidebar/menu -->
-    <nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
-        <div class="w3-container w3-row">
-            <div class="w3-col s4">
-                <img src="public/images/avatar.png" class="w3-circle w3-margin-right" style="width:46px">
+    <% if (!is_authorized) { %>
+        <section class="jumbotron container mt-5">
+            <h1>Multi-Tenant Portal Frontend</h1>
+            <p class="mt-5">You are not authorized to use resources in OF@TEIN++ Playground</p>
+            <p class="mt-5">Please contact administrator and provide following Info </p>
+            <p class="mt-5">Your ID: <%= user.id %> and Organization Info </p>
+        </section>
+    <% } else { %>
+        <!-- Sidebar/menu -->
+        <nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
+            <div class="w3-container w3-row">
+                <div class="w3-col s4">
+                    <img src="public/images/avatar.png" class="w3-circle w3-margin-right" style="width:46px">
+                </div>
+                <div class="w3-col s8 w3-bar">
+                    <span>Welcome, <strong><%= user.displayName %> ID: <%= user.id %> </strong></span><br>
+                </div>
             </div>
-            <div class="w3-col s8 w3-bar">
-                <span>Welcome, <strong><%= user.displayName %> ID: <%= user.id %> </strong></span><br>
+            <hr>
+            <div class="w3-container">
+                <h5>Dashboard</h5>
             </div>
-        </div>
-        <hr>
-        <div class="w3-container">
-            <h5>Dashboard</h5>
-        </div>
-        <div class="w3-bar-block">
-            <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black"
-               onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
-            <a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa fa-users fa-fw"></i>  Deploy</a>
-            <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw"></i>  List</a>
-            <a href="/logout" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw"></i>  Logout</a>
-        </div>
-    </nav>
-    <!-- Overlay effect when opening sidebar on small screens -->
-    <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer"
-         title="close side menu" id="myOverlay"></div>
+            <div class="w3-bar-block">
+                <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black"
+                   onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
+                <a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa fa-users fa-fw"></i> 
+                    Deploy</a>
+                <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw"></i>  List</a>
+                <a href="/logout" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw"></i> 
+                    Logout</a>
+            </div>
+        </nav>
+        <!-- Overlay effect when opening sidebar on small screens -->
+        <div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer"
+             title="close side menu" id="myOverlay"></div>
 
-    <!-- !PAGE CONTENT! -->
+        <!-- !PAGE CONTENT! -->
 <div class="w3-main" style="margin-left:300px;margin-top:43px;">
 
     <!-- Header -->
@@ -55,7 +64,7 @@
                     <tr>
                         <td><%= Cluster_List.cluster %></td>
                         <td
-                        <% if (Cluster_List.running = "true") { %>
+                        <% if (Cluster_List.running === true) { %>
                             style="background-color:green;color:white;">
                             Up
                         </td>
@@ -77,30 +86,36 @@
                     <th>Namespace</th>
                     <th>Name</th>
                 </tr>
-                <% GIST_Pod_List.forEach(function(GIST_Pod_List) { %>
-                    <tr>
-                        <td>KR-GIST</td>
-                        <td><%= GIST_Pod_List.kind %></td>
-                        <td><%= GIST_Pod_List.name %></td>
-                        <td><%= GIST_Pod_List.namespace %> </td>
-                    </tr>
-                <% }); %>
-                <% UM_Pod_List.forEach(function(UM_Pod_List) { %>
-                    <tr>
-                        <td>MY-UM</td>
-                        <td><%= UM_Pod_List.kind %></td>
-                        <td><%= UM_Pod_List.name %></td>
-                        <td><%= UM_Pod_List.namespace %> </td>
-                    </tr>
-                <% }); %>
-                <% CHULA_Pod_List.forEach(function(CHULA_Pod_List) { %>
-                    <tr>
-                        <td>TH-CHULA</td>
-                        <td><%= CHULA_Pod_List.kind %></td>
-                        <td><%= CHULA_Pod_List.name %></td>
-                        <td><%= CHULA_Pod_List.namespace %> </td>
-                    </tr>
-                <% }); %>
+                <% if (GIST_Pod_List[0] && GIST_Pod_List[0].kind) {%>
+                    <% GIST_Pod_List.forEach(function(GIST_Pod_List) { %>
+                        <tr>
+                            <td>gist</td>
+                            <td><%= GIST_Pod_List.kind %></td>
+                            <td><%= GIST_Pod_List.name %></td>
+                            <td><%= GIST_Pod_List.namespace %> </td>
+                        </tr>
+                    <% }); %>
+                <% } %>
+                <% if (UM_Pod_List[0] && UM_Pod_List[0].kind) {%>
+                    <% UM_Pod_List.forEach(function(UM_Pod_List) { %>
+                        <tr>
+                            <td>um</td>
+                            <td><%= UM_Pod_List.kind %></td>
+                            <td><%= UM_Pod_List.name %></td>
+                            <td><%= UM_Pod_List.namespace %> </td>
+                        </tr>
+                    <% }); %>
+                <% } %>
+                <% if (CHULA_Pod_List[0] && CHULA_Pod_List[0].kind) {%>
+                    <% CHULA_Pod_List.forEach(function(CHULA_Pod_List) { %>
+                        <tr>
+                            <td>chula</td>
+                            <td><%= CHULA_Pod_List.kind %></td>
+                            <td><%= CHULA_Pod_List.name %></td>
+                            <td><%= CHULA_Pod_List.namespace %> </td>
+                        </tr>
+                    <% }); %>
+                <% } %>
             </table>
             <br>
         </div>
@@ -108,23 +123,25 @@
 
         <div class="w3-container">
             <h4 style="color: blue">New Deployment (Pod, Deployment, Service)</h4>
-            <form name="deployForm" action="https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/v2/pods"
-                  method="put" enctype="multipart/form-data">
-                <label for="yamlFile">Select YAML File:</label>
-                <input type="file" id="yamlFile" name="yamlFile" required><br><br>
+            <form id="deployForm" name="deployForm"
+                  action="https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/v2/pods"
+                  method="post" enctype="multipart/form-data" target="_blank" >
                 <label for="cluster">Select Deployment Cluster (Running):</label>
-                <select id="cluster">
+                <select id="cluster" name="cluster">
                     <option value="chula">CHULA-Thailand</option>
                     <option value="gist" selected>GIST-Korea</option>
                     <option value="um">UM-Malaysia</option>
                 </select>
+                <br><br>
+                <label for="yaml">Select YAML File:</label>
+                <input type="file" id="yaml" name="yaml" required>
                 <input id="userid" name="userid" type="hidden" value="<%= user.id %>">
                 <br><br><br>
                 <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
             </form>
         </div>
     </div>
-
+    <% } %>
     <% } %>
 
     <script>
@@ -151,14 +168,20 @@
             overlayBg.style.display = "none";
         }
 
-        function validateForm() {
-            var yamlFile = document.forms["deplyForm"]["yamlFile"].value;
-            if (yamlFile == "" || yamlFile == null) {
+        /*function validateForm() {
+            var yaml = document.forms["deplyForm"]["yaml"].value;
+            if (yaml == "" || yaml == null) {
                 alert("Yaml file must be selected.");
                 return false;
             }
             alert("Yaml file must be selected." + document.getElementById('userid').value);
-        }
+        }*/
+
+        /*let form = document.getElementById("deployForm");
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          alert("Deployment request submitted successfully!");
+        });*/
 
     </script>
 
