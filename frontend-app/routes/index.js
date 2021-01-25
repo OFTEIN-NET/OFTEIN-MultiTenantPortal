@@ -25,12 +25,12 @@ router.get('/', (req, res, next) => {
     {
         console.log("[INFO] User is Logged in and Authorized")
         let GIST_Pod_List, UM_Pod_List, CHULA_Pod_List, Cluster_List;
-        let cluster_get_base_url = 'https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters';
-        //var pods_get_base_url = 'https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/v2/pods?userid='+user.id+'&limit=50&cluster=';
+        let cluster_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters';
+        //var pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/v2/pods?userid='+user.id+'&limit=50&cluster=';
         // var gist_cluster_pods_url = pods_get_base_url + 'gist'
         // var chula_cluster_pods_url = pods_get_base_url + 'chula'
         // var um_cluster_pods_url = pods_get_base_url + 'um'
-        let pods_get_base_url = 'https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/clusters/';
+        let pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/';
         let gist_cluster_pods_url = pods_get_base_url + 'gist/pods';
         let chula_cluster_pods_url = pods_get_base_url + 'chula/pods';
         let um_cluster_pods_url = pods_get_base_url + 'um/pods';
