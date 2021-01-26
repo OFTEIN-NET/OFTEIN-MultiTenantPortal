@@ -5,6 +5,8 @@ const passport = require('passport');
 const fetch = require('node-fetch');
 const router = express.Router();
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 router.get('/', (req, res, next) => {
     const { user } = req;
 

@@ -1,10 +1,9 @@
 {
-  "name": "rakthai",
+  "name": "oftein-multitenant-backend",
   "engines": {
     "node": "12"
   },
   "dependencies": {
-    "@google-cloud/datastore": "^6.1.0",
     "@hapi/boom": "^9.1.0",
     "@hapi/hapi": "^19.1.1",
     "@hapi/inert": "^6.0.3",
@@ -14,14 +13,11 @@
     "@kubernetes/client-node": "^0.13.0",
     "@sterlp/pretty-data": "^0.50.0",
     "axios": "^0.20.0",
-    "bcrypt": "^5.0.0",
-    "firebase-admin": "^9.2.0",
     "glob": "^7.1.6",
     "handlebars": "^4.7.6",
-    "hapi-auth-bearer-token": "^8.0.0",
     "hapi-cron": "^1.1.0",
     "joi": "^17.3.0",
-    "nanoid": "^3.1.12",
+    "mysql": "^2.18.1",
     "request": "^2.88.2",
     "yamljs": "^0.3.0"
   },

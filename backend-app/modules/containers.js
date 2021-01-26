@@ -3,13 +3,12 @@ exports.plugin = {
     once: true,
     register: async (server, options) => {
 
-        await server.register(require("../plugins/datastore"));
+        await server.register(require("../plugins/mysql"));
 
         const Joi = require('joi');
         const Yaml = require('js-yaml');
         const FS   = require('fs');
         const Boom = require('@hapi/boom');
-        const Datastore = server.app.datastore;
 
         const k8s = require('@kubernetes/client-node');
 
@@ -31,6 +30,7 @@ exports.plugin = {
 
         let clusters = {
             "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
+            // "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
             "gist": createApiNamespace('./configs/config_gist.yaml', "default"),
             "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns")
         };
@@ -45,7 +45,7 @@ exports.plugin = {
             }).catch((error) => {
                 running = false;
                 status = "down";
-                console.log(error)
+                // console.log(error)
                 if (error.response) status = error.response.statusMessage;
             });
             return {
@@ -104,6 +104,10 @@ exports.plugin = {
             else return new Boom.badImplementation();
         };
 
+        // cluster #todo
+        const currentstatuscluster = (cluster, dev = false) => clusters[cluster].coreapi
+            .listComponentStatus()
+
         // pod
         const createpod = (cluster, yaml, dev = false) => clusters[cluster].coreapi
             .createNamespacedPod(clusters[cluster].namespace, yaml)
@@ -117,6 +121,10 @@ exports.plugin = {
         const deletepod = (cluster, pod, dev = false) => clusters[cluster].coreapi
             .deleteNamespacedPod(pod, clusters[cluster].namespace)
             .then((res) => prettier_single(res, "Pod", dev));
+        // const updatepod = (cluster, pod, yaml, dev = false) => clusters[cluster].coreapi
+        //     .patchNamespacedPod(pod, clusters[cluster].namespace, yaml)
+        //     .then((res) => prettier_single(res, "Pod", dev));
+
 
         // deployment
 
@@ -133,6 +141,32 @@ exports.plugin = {
             .deleteNamespacedDeployment(pod, clusters[cluster].namespace)
             .then((res) => prettier_single(res, "Deployment", dev));
 
+        const upsertpod = (cluster, name, user, yaml) => {
+            const sql = `INSERT INTO pods (cluster, name, user, yaml)
+                            VALUES
+                              (?, ?, ?, ?)
+                            ON DUPLICATE KEY UPDATE
+                              cluster = ?,
+                              name = ?,
+                              user = ?,
+                              yaml = ?`
+            return server.app.mysql.query(sql, [cluster, name, user, JSON.stringify(yaml), cluster, name, user, JSON.stringify(yaml)])
+        }
+
+        const deletepodinfo = (cluster, name, user) => {
+            const sql = `DELETE FROM pods WHERE cluster = ? AND name = ? AND user = ?`;
+            return server.app.mysql.query(sql, [cluster, name, user])
+        }
+
+        const getpodinfo = (cluster, name, user) => {
+            const sql = `SELECT * FROM pods WHERE cluster = ? AND name = ? AND user = ?`
+            return server.app.mysql.query(sql, [cluster, name, user])
+        }
+
+        const getallpodbyuser = (user) => {
+            const sql = `SELECT * FROM pods WHERE user = ?`
+            return server.app.mysql.query(sql, [user])
+        }
 
         server.route([
 
@@ -165,30 +199,55 @@ exports.plugin = {
             },
             {
                 path: "/v2/pods",
+                method: "DELETE",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters)),
+                            name: Joi.string().required()
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+                        return getpodinfo(request.query.cluster, request.query.name, request.query.userid)
+                            .then(async (result) => {
+                                await Promise.all(result.map(async (pod) => {
+                                    const res = await server.inject({
+                                        method: "DELETE",
+                                        url: `/clusters/${pod.cluster}/pods/${pod.name}`
+                                    });
+                                    await deletepodinfo(pod.cluster, pod.name, pod.user);
+                                    pod.status = res.result;
+                                }));
+                                return result
+                            })
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
+                path: "/v2/pods",
                 method: "GET",
                 options: {
                     validate: {
                         query: Joi.object({
                             dev: Joi.boolean().default(false),
                             userid: Joi.string().required(),
-                            pagecursor: Joi.string(),
-                            limit: Joi.number().min(0).default(10).max(100),
                             cluster: Joi.string().valid(...Object.keys(clusters))
                         })
                     }
                 },
                 handler: async (request, h) => {
                     try {
-                        return Datastore.getCollectionWithAutocomplete(
-                            "pods",
-                            request.query.limit,
-                            [
-                                ["user", "=", request.query.userid],
-                                ["cluster", "=", request.query.cluster]
-                            ],
-                            request.query.pagecursor)
+                        return getallpodbyuser(request.query.userid)
                             .then(async (result) => {
-                                await Promise.all(result.data.map(async (pod) => {
+                                await Promise.all(result.map(async (pod) => {
                                     delete pod.yaml;
                                     const res = await server.inject({
                                         method: "GET",
@@ -198,9 +257,8 @@ exports.plugin = {
                                 }));
                                 return result
                             })
-
                     } catch (err) {
-                        console.log(err)
+                        // console.log(err)
                         return err.message;
                     }
 
@@ -208,7 +266,7 @@ exports.plugin = {
             },
             {
                 path: "/v2/pods",
-                method: "PUT",
+                method: "POST",
                 options: {
                     payload: {
                         maxBytes: 1024 * 1024 * 1,
@@ -243,13 +301,12 @@ exports.plugin = {
                                 name: yaml.metadata.name,
                                 created: new Date()
                             }
-                            await Datastore.initFromNewData(pod, "pods", server.app.id(10), [
-                                "cluster", "user", "created", "updated", "name"]).save()
+                            await upsertpod(pod.cluster, pod.name, pod.user, pod.yaml);
                         }
 
                         return res.result
                     } catch (err) {
-                        console.log(err)
+                        // console.log(err)
                         return err.message;
                     }
 
@@ -269,6 +326,35 @@ exports.plugin = {
                     return getcluster(request.params.cluster)
                 }
             },
+            // {
+            //     path: "/clusters/{cluster}/pods/{name}",
+            //     method: "PATCH",
+            //     options: {
+            //         payload: {
+            //             maxBytes: 1024 * 1024 * 1,
+            //             multipart: {output: "file"},
+            //             parse: true
+            //         },
+            //         validate: {
+            //             payload: Joi.object({
+            //                 yaml: Joi.any().meta({ swaggerType: "file" })
+            //             }),
+            //             params: Joi.object({
+            //                 cluster: Joi.string().valid(...Object.keys(clusters)),
+            //                 name: Joi.string().required()
+            //             }),
+            //             query: Joi.object({
+            //                 dev: Joi.boolean().default(false)
+            //             })
+            //         }
+            //     },
+            //     handler: async (request, h) => {
+            //
+            //         const yamlfile = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+            //         return updatepod(request.params.cluster, request.params.name, yamlfile, request.query.dev)
+            //             .catch((error) => handlek8serror(error));
+            //     }
+            // },
             {
                 path: "/clusters/{cluster}/pods",
                 method: "POST",
@@ -313,7 +399,7 @@ exports.plugin = {
                     }
                 },
                 handler: async (request, h) => {
-                    console.log(request.params)
+                    // console.log(request.params)
                     return deletepod(request.params.cluster, request.params.pod, request.query.dev)
                         .catch((error) => handlek8serror(error))
                 }
@@ -375,7 +461,7 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
                     const yamlfile = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
-                    console.log(yamlfile)
+                    // console.log(yamlfile)
                     return createdeployment(request.params.cluster, yamlfile, request.query.dev)
                         .catch((error) => handlek8serror(error))
                 }
@@ -435,6 +521,12 @@ exports.plugin = {
             },
 
         ]);
+
+
+        server.route([
+
+        ])
+
     }
 
 

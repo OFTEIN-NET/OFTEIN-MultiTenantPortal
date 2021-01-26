@@ -43,7 +43,8 @@ main = async () => {
             validate: routesValidation,
             files: { relativeTo: "./public"},
             cors: true
-        }
+        },
+        router: { stripTrailingSlash: true }
     });
 
     const Glob = require('glob');
