@@ -27,7 +27,7 @@ passport.use(new FacebookStrategy({
 passport.use(new LinkedinStrategy({
         clientID: LINKEDIN_API_KEY,
         clientSecret: LINKEDIN_SECRET_KEY,
-        callbackURL: 'http://ofteinplusplus.main.202.28.193.102.xip.io/auth/linkedin/callback',
+        callbackURL: 'https://ofteinplusplus.main.202.28.193.102.xip.io/auth/linkedin/callback',
         scope: ['r_emailaddress', 'r_liteprofile'],
         state: true
     },
@@ -38,7 +38,7 @@ passport.use(new LinkedinStrategy({
 passport.use(new GoogleStrategy({
         clientID: GOOGLE_CLIENT_ID,
         clientSecret: GOOGLE_CLIENT_SECRET,
-        callbackURL: 'http://ofteinplusplus.main.202.28.193.102.xip.io/auth/google/callback'
+        callbackURL: 'https://ofteinplusplus.main.202.28.193.102.xip.io/auth/google/callback'
     },
     (accessToken, refreshToken, profile, cb) => {
         return cb(null, profile);
