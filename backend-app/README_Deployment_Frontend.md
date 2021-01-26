@@ -5,7 +5,7 @@
 * gcloud auth login
 * gcloud config set project oftein-plusplus
 * gcloud auth configure-docker
-* gcloud builds submit --tag gcr.io/oftein-plusplus/frontend --ignore-file=.dockerignore
+* gcloud builds submit --config cloudbuild.yaml
 
 ##### Endpoints
 * Datastore - https://console.cloud.google.com/datastore/welcome?project=oftein-plusplus
