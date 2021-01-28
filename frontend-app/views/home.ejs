@@ -122,9 +122,9 @@
         <hr>
 
         <div class="w3-container">
-            <h4 style="color: blue">New Deployment (Pod, Deployment, Service)</h4>
+            <h4 style="color: blue">Create new Deployment (Pod, Deployment, Service)</h4>
             <form id="deployForm" name="deployForm"
-                  action="https://oftein-backend-deployment-pod-f5oec474zq-an.a.run.app/v2/pods"
+                  action="<%= pods_post_url %>>"
                   method="post" enctype="multipart/form-data" target="_blank" >
                 <label for="cluster">Select Deployment Cluster (Running):</label>
                 <select id="cluster" name="cluster">
