@@ -8,37 +8,43 @@ const router = express.Router();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 router.get('/', (req, res, next) => {
-    const { user } = req;
+    const {user} = req;
 
-    if (!user)
-    {
+    if (!user) {
         console.log("[INFO] User is not Logged in yet")
         res.render('home', {user: user});
     }
 
-    let is_authorized=true;
+    let is_authorized = true;
 
-    if(!is_authorized){
+    if (!is_authorized) {
         console.log("[INFO] User is not Authorized yet.")
         res.render('home', {user: user, is_authorized: is_authorized});
     }
 
-    if (user && is_authorized)
-    {
+    if (user && is_authorized) {
         console.log("[INFO] User is Logged in and Authorized")
         let GIST_Pod_List, UM_Pod_List, CHULA_Pod_List, Cluster_List;
-        let cluster_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters';
-        //var pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/v2/pods?userid='+user.id+'&limit=50&cluster=';
-        // var gist_cluster_pods_url = pods_get_base_url + 'gist'
-        // var chula_cluster_pods_url = pods_get_base_url + 'chula'
-        // var um_cluster_pods_url = pods_get_base_url + 'um'
-        let pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/';
-        let gist_cluster_pods_url = pods_get_base_url + 'gist/pods';
-        let chula_cluster_pods_url = pods_get_base_url + 'chula/pods';
-        let um_cluster_pods_url = pods_get_base_url + 'um/pods';
-        console.log("[INFO] Cluster URL: "+pods_get_base_url);
+        let backend_api_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io'; //str.replace(/\/$/, '') to remove trailing / from url
 
-        fetch(cluster_get_base_url)
+        let cluster_get_url = backend_api_base_url + '/clusters';
+
+        let pods_post_url = backend_api_base_url + '/v2/pods';
+        let deployments_post_url = backend_api_base_url + '/v2/deployments';
+
+        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=50&cluster=';
+        let gist_cluster_pods_url = pods_get_base_url + 'gist'
+        let chula_cluster_pods_url = pods_get_base_url + 'chula'
+        let um_cluster_pods_url = pods_get_base_url + 'um'
+
+        // let pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/';
+        // let gist_cluster_pods_url = pods_get_base_url + 'gist/pods';
+        // let chula_cluster_pods_url = pods_get_base_url + 'chula/pods';
+        // let um_cluster_pods_url = pods_get_base_url + 'um/pods';
+
+        console.log("[INFO] Cluster URL: " + pods_get_base_url);
+
+        fetch(cluster_get_url)
             .then(response => response.json())
             .then(cluster_json => {
                 console.log(cluster_json);
@@ -58,7 +64,16 @@ router.get('/', (req, res, next) => {
                                     .then(CHULA_Pod_List => {
                                         console.log("[INFO] CHULA Cluster Pods");
                                         console.log(CHULA_Pod_List);
-                                        res.render('home', {user: user, is_authorized: is_authorized, Cluster_List: cluster_json, GIST_Pod_List: GIST_Pod_List, UM_Pod_List: UM_Pod_List, CHULA_Pod_List: CHULA_Pod_List});
+                                        res.render('home', {
+                                            user: user,
+                                            is_authorized: is_authorized,
+                                            Cluster_List: cluster_json,
+                                            GIST_Pod_List: GIST_Pod_List,
+                                            UM_Pod_List: UM_Pod_List,
+                                            CHULA_Pod_List: CHULA_Pod_List,
+                                            pods_post_url: pods_post_url,
+                                            deployments_post_url: deployments_post_url
+                                        });
                                     })
                             })
                         //res.render('home', {user: user, Cluster_List: cluster_json, GIST_Pod_List: GIST_Pod_List, UM_Pod_List: UM_Pod_List});
@@ -83,7 +98,7 @@ router.get('/login/facebook', passport.authenticate('facebook'));
 
 router.get('/login/linkedin', passport.authenticate('linkedin'));
 
-router.get('/login/google', passport.authenticate('google', { scope: ['profile'] }));
+router.get('/login/google', passport.authenticate('google', {scope: ['profile']}));
 
 router.get('/logout', (req, res, next) => {
     req.logout();
@@ -91,19 +106,19 @@ router.get('/logout', (req, res, next) => {
 });
 
 router.get('/auth/facebook/callback',
-    passport.authenticate('facebook', { failureRedirect: '/' }),
+    passport.authenticate('facebook', {failureRedirect: '/'}),
     (req, res, next) => {
         res.redirect('/');
     });
 
 router.get('/auth/linkedin/callback',
-    passport.authenticate('linkedin', { failureRedirect: '/', successRedirect: '/' }),
+    passport.authenticate('linkedin', {failureRedirect: '/', successRedirect: '/'}),
     (req, res, next) => {
         res.redirect('/');
     });
 
 router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/' }),
+    passport.authenticate('google', {failureRedirect: '/'}),
     (req, res, next) => {
         res.redirect('/');
     });
