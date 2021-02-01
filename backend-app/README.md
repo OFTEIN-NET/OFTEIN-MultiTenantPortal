@@ -13,7 +13,7 @@ through this following information:
 Method | URL | Description | Payload | Params | Query | Example
 --- | --- | --- | --- | --- | --- | ---
 GET | `host`/v2/pods | view all pods | - | - | `userid`<br>`cluster` | [/v2/pods?userid=2&cluster=chula](https://ofteinplusapi.main.202.28.193.102.xip.io/v2/pods?userid=2&cluster=chula)
-PUT | `host`/v2/pods | create a pod | `yaml` | - | `cluster`<br>`userid` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
+POST | `host`/v2/pods | create a pod | `yaml` | - | `cluster`<br>`userid` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
 DELETE | `host`/v2/pods | delete specific pod | - | - | `cluster`<br>`userid`<br>`name` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
 
 
