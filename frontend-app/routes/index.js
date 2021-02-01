@@ -32,10 +32,10 @@ router.get('/', (req, res, next) => {
         let pods_post_url = backend_api_base_url + '/v2/pods';
         let deployments_post_url = backend_api_base_url + '/v2/deployments';
 
-        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=50&cluster=';
-        let gist_cluster_pods_url = pods_get_base_url + 'gist'
-        let chula_cluster_pods_url = pods_get_base_url + 'chula'
-        let um_cluster_pods_url = pods_get_base_url + 'um'
+        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=100';//&cluster=';
+        //let gist_cluster_pods_url = pods_get_base_url + 'gist'
+        //let chula_cluster_pods_url = pods_get_base_url + 'chula'
+        //let um_cluster_pods_url = pods_get_base_url + 'um'
 
         // let pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/';
         // let gist_cluster_pods_url = pods_get_base_url + 'gist/pods';
@@ -49,12 +49,12 @@ router.get('/', (req, res, next) => {
             .then(cluster_json => {
                 console.log(cluster_json);
                 //res.render('home', { user: user , api_url: backend_api_base_url, Cluster_List: Cluster_List, Pod_List: json });
-                fetch(gist_cluster_pods_url)
+                fetch(pods_get_base_url)
                     .then(response => response.json())
-                    .then(GIST_Pod_List => {
-                        console.log("[INFO] GIST Cluster Pods");
-                        console.log(GIST_Pod_List);
-                        fetch(um_cluster_pods_url)
+                    .then(USER_Pod_List => {
+                        console.log("[INFO] User Pods");
+                        console.log(USER_Pod_List);
+                        /*fetch(um_cluster_pods_url)
                             .then(response => response.json())
                             .then(UM_Pod_List => {
                                 console.log("[INFO] UM Cluster Pods");
@@ -63,19 +63,19 @@ router.get('/', (req, res, next) => {
                                     .then(response => response.json())
                                     .then(CHULA_Pod_List => {
                                         console.log("[INFO] CHULA Cluster Pods");
-                                        console.log(CHULA_Pod_List);
+                                        console.log(CHULA_Pod_List);*/
                                         res.render('home', {
                                             user: user,
                                             is_authorized: is_authorized,
                                             Cluster_List: cluster_json,
-                                            GIST_Pod_List: GIST_Pod_List,
-                                            UM_Pod_List: UM_Pod_List,
-                                            CHULA_Pod_List: CHULA_Pod_List,
+                                            USER_Pod_List: USER_Pod_List,
+                                            /*UM_Pod_List: UM_Pod_List,
+                                            CHULA_Pod_List: CHULA_Pod_List,*/
                                             pods_post_url: pods_post_url,
                                             deployments_post_url: deployments_post_url
                                         });
-                                    })
-                            })
+                                    /*})
+                            })*/
                         //res.render('home', {user: user, Cluster_List: cluster_json, GIST_Pod_List: GIST_Pod_List, UM_Pod_List: UM_Pod_List});
                     })
             })
