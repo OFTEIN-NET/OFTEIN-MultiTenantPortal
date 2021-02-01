@@ -9,7 +9,7 @@
     "@hapi/inert": "^6.0.3",
     "@hapi/joi": "^17.1.1",
     "@hapi/vision": "^6.0.1",
-    "@hapi/wreck": "^17.0.0",
+    "@hapi/wreck": "^17.1.0",
     "@kubernetes/client-node": "^0.13.0",
     "@sterlp/pretty-data": "^0.50.0",
     "axios": "^0.20.0",
