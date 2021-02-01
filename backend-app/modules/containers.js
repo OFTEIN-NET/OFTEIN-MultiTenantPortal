@@ -9,6 +9,8 @@ exports.plugin = {
         const Yaml = require('js-yaml');
         const FS   = require('fs');
         const Boom = require('@hapi/boom');
+        let Wreck = require('@hapi/wreck');
+        Wreck = Wreck.defaults({ timeout: 3000});
 
         const k8s = require('@kubernetes/client-node');
 
@@ -17,12 +19,15 @@ exports.plugin = {
         const createApiNamespace = (yaml, namespace) => {
             const cluster = new k8s.KubeConfig();
             cluster.loadFromFile(yaml);
+            const clusterinfo = Yaml.safeLoad(FS.readFileSync(yaml, 'utf8'));
+            const url = clusterinfo.clusters[0].cluster.server;
             const k8sAppsApi = cluster.makeApiClient(k8s.AppsV1Api);
             const k8sCoreApi = cluster.makeApiClient(k8s.CoreV1Api);
             return {
                 appsapi: k8sAppsApi,
                 coreapi: k8sCoreApi,
-                namespace: namespace
+                namespace: namespace,
+                url: url
             }
         };
 
@@ -30,24 +35,24 @@ exports.plugin = {
 
         let clusters = {
             "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
-            // "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
-            "gist": createApiNamespace('./configs/config_gist.yaml', "default"),
+            "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
+            // "gist_demo": createApiNamespace('./configs/config_gist_old.yaml', "default"),
             "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns")
         };
 
         // Define Function
         const getcluster = async (cluster) => {
-            let status = "down";
-            let running = false;
-            await listpod(cluster).then(() => {
-                running = true;
-                status = "up";
-            }).catch((error) => {
-                running = false;
-                status = "down";
-                // console.log(error)
-                if (error.response) status = error.response.statusMessage;
-            });
+            let status = "up";
+            let running = true;
+
+            await Wreck.get(`${clusters[cluster].url}/livez?verbose`)
+                .catch((error) => {
+                    if (error.output.statusCode >= 500) {
+                        running = false;
+                        status = "down";
+                    }
+                });
+
             return {
                 cluster: cluster,
                 namespace: clusters[cluster].namespace,
@@ -142,7 +147,7 @@ exports.plugin = {
             .then((res) => prettier_single(res, "Deployment", dev));
 
         const upsertpod = (cluster, name, user, yaml) => {
-            const sql = `INSERT INTO pods (cluster, name, user, yaml)
+            const sql = `INSERT INTO new_schema.pods (cluster, name, user, yaml)
                             VALUES
                               (?, ?, ?, ?)
                             ON DUPLICATE KEY UPDATE
@@ -154,18 +159,20 @@ exports.plugin = {
         }
 
         const deletepodinfo = (cluster, name, user) => {
-            const sql = `DELETE FROM pods WHERE cluster = ? AND name = ? AND user = ?`;
+            const sql = `DELETE FROM new_schema.pods WHERE cluster = ? AND name = ? AND user = ?`;
             return server.app.mysql.query(sql, [cluster, name, user])
         }
 
         const getpodinfo = (cluster, name, user) => {
-            const sql = `SELECT * FROM pods WHERE cluster = ? AND name = ? AND user = ?`
+            const sql = `SELECT * FROM new_schema.pods WHERE cluster = ? AND name = ? AND user = ?`;
             return server.app.mysql.query(sql, [cluster, name, user])
         }
 
-        const getallpodbyuser = (user) => {
-            const sql = `SELECT * FROM pods WHERE user = ?`
-            return server.app.mysql.query(sql, [user])
+        const getallpodbyuser = (user, cluster) => {
+            let sql = `SELECT * FROM new_schema.pods WHERE`;
+            if (cluster == null) sql += ` user = ?`;
+            else sql += ` user = ? AND cluster = ?`;
+            return server.app.mysql.query(sql, [user, cluster])
         }
 
         server.route([
@@ -194,7 +201,10 @@ exports.plugin = {
                 path: "/clusters",
                 method: "GET",
                 handler: async (request, h) => {
-                    return listclusters().catch((error) => "Error")
+                    return listclusters().catch((error) => {
+                        console.log(error)
+                        return "Error"
+                    })
                 }
             },
             {
@@ -205,7 +215,7 @@ exports.plugin = {
                         query: Joi.object({
                             dev: Joi.boolean().default(false),
                             userid: Joi.string().required(),
-                            cluster: Joi.string().valid(...Object.keys(clusters)),
+                            cluster: Joi.string().valid(...Object.keys(clusters)).required(),
                             name: Joi.string().required()
                         })
                     }
@@ -245,7 +255,7 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
                     try {
-                        return getallpodbyuser(request.query.userid)
+                        return getallpodbyuser(request.query.userid, request.query.cluster)
                             .then(async (result) => {
                                 await Promise.all(result.map(async (pod) => {
                                     delete pod.yaml;
@@ -519,7 +529,6 @@ exports.plugin = {
                 handler: async (request, h) => getpod(request.params.cluster, request.params.pod, request.query.dev)
                     .catch((error) => handlek8serror(error))
             },
-
         ]);
 
 
