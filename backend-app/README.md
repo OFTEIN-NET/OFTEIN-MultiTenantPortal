@@ -22,8 +22,8 @@ DELETE | `host`/v2/pods | delete specific pod | - | - | `cluster`<br>`userid`<br
 Method | URL | Description | Payload | Params | Example
 --- | --- | --- | --- | --- | ---
 GET | `host`/clusters | view all clusters | - | - | [/clusters](https://ofteinplusapi.main.202.28.193.102.xip.io/clusters)
-GET | `host`/clusters/`cluster` | view cluster | - | `cluster` | [/clusters/`chula`](https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/k3os1)
-GET | `host`/clusters/`cluster`/pods | view all pods | - | `cluster` | [/clusters/`chula`/pods](https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/k3os1/pods)
+GET | `host`/clusters/`cluster` | view cluster | - | `cluster` | [/clusters/`chula`](https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/chula)
+GET | `host`/clusters/`cluster`/pods | view all pods | - | `cluster` | [/clusters/`chula`/pods](https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/chula/pods)
 POST | `host`/clusters/`cluster`/pods | create a pod | `yaml` | `cluster` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
 GET | `host`/clusters/`cluster`/pods/`pod` | view pod | - | `cluster`<br>`pod` | [/clusters/`chula`/pods/`nginx-test`](https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/chula/pods/nginx-test)
 DELETE | `host`/clusters/`cluster`/pods/`pod` | delete pod | - | `cluster`<br>`pod` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)

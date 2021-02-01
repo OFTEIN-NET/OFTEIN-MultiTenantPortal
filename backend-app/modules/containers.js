@@ -147,7 +147,7 @@ exports.plugin = {
             .then((res) => prettier_single(res, "Deployment", dev));
 
         const upsertpod = (cluster, name, user, yaml) => {
-            const sql = `INSERT INTO pods (cluster, name, user, yaml)
+            const sql = `INSERT INTO new_schema.pods (cluster, name, user, yaml)
                             VALUES
                               (?, ?, ?, ?)
                             ON DUPLICATE KEY UPDATE
@@ -159,17 +159,19 @@ exports.plugin = {
         }
 
         const deletepodinfo = (cluster, name, user) => {
-            const sql = `DELETE FROM pods WHERE cluster = ? AND name = ? AND user = ?`;
+            const sql = `DELETE FROM new_schema.pods WHERE cluster = ? AND name = ? AND user = ?`;
             return server.app.mysql.query(sql, [cluster, name, user])
         }
 
         const getpodinfo = (cluster, name, user) => {
-            const sql = `SELECT * FROM pods WHERE cluster = ? AND name = ? AND user = ?`;
+            const sql = `SELECT * FROM new_schema.pods WHERE cluster = ? AND name = ? AND user = ?`;
             return server.app.mysql.query(sql, [cluster, name, user])
         }
 
         const getallpodbyuser = (user, cluster) => {
-            const sql = `SELECT * FROM pods WHERE user = ? AND cluster= ?`
+            let sql = `SELECT * FROM new_schema.pods WHERE`;
+            if (cluster == null) sql += ` user = ?`;
+            else sql += ` user = ? AND cluster = ?`;
             return server.app.mysql.query(sql, [user, cluster])
         }
 
