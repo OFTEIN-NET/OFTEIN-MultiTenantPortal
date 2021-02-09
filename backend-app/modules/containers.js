@@ -61,6 +61,34 @@ exports.plugin = {
             }
         };
 
+        const getresource = async (cluster) => {
+
+            let resource = {
+                node: 0,
+                capacity: {
+                    "cpu": 0, "memory": 0
+                },
+                allocatable: {
+                    "cpu": 0, "memory": 0
+                }
+            }
+
+            await listnode(cluster)
+                .then((response) => {
+                    response.response.body.items.map((node) => {
+                        resource.node++;
+                        resource.capacity.cpu+= parseInt(node.status.capacity.cpu);
+                        resource.capacity.memory+= parseFloat(node.status.capacity.memory)/1024/1024;
+                        resource.allocatable.cpu+= parseInt(node.status.allocatable.cpu);
+                        resource.allocatable.memory+= parseFloat(node.status.allocatable.memory)/1024/1024;
+                    })
+                }).catch((error) => {
+                    console.log(error)
+                })
+
+            return resource;
+        };
+
         const listclusters = (dev = false) => {
             return Promise.resolve().then(() => {
                 return Promise.all(Object.keys(clusters).map((cluster) => getcluster(cluster)));
@@ -110,8 +138,14 @@ exports.plugin = {
         };
 
         // cluster #todo
-        const currentstatuscluster = (cluster, dev = false) => clusters[cluster].coreapi
-            .listComponentStatus()
+        // const currentstatuscluster = (cluster, dev = false) => clusters[cluster].coreapi
+        //     .listComponentStatus()
+        const currentresourcecluster = (cluster, dev = false) => clusters[cluster].coreapi
+            .listNamespacedResourceQuota(clusters[cluster].namespace)
+        const listnode = (cluster, dev = false) => clusters[cluster].coreapi
+            .listNode()
+        const listnamespacedResourceQuota = (cluster, dev = false) => clusters[cluster].coreapi
+            .listNamespacedResourceQuota()
 
         // pod
         const createpod = (cluster, yaml, dev = false) => clusters[cluster].coreapi
@@ -177,6 +211,13 @@ exports.plugin = {
 
         server.route([
 
+            {
+                path: "/test/{cluster}",
+                method: "GET",
+                handler: async (request, h) => {
+                    return getresource(request.params.cluster)
+                }
+            },
             {
                 path: "/test/yaml",
                 method: "POST",
