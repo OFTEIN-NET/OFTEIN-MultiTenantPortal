@@ -62,7 +62,6 @@ spec:
         requests:
           cpu: 0.5
           memory: 0.5Gi
-
 ```
 
 ## Example Deployment Yaml 
