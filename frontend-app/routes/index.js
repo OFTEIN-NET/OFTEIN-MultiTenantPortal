@@ -29,23 +29,15 @@ router.get('/', (req, res, next) => {
 
         let cluster_get_url = backend_api_base_url + '/clusters';
 
-        let pods_post_url = backend_api_base_url + '/v2/pods';
-        let deployments_post_url = backend_api_base_url + '/v2/deployments';
-        let service_post_url = backend_api_base_url + '/v2/service';
-
-        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=100';//&cluster=';
+        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=100';
         let deployments_get_base_url = backend_api_base_url + '/v2/deployments?userid=' + user.id + '&limit=100';
-        let service_get_base_url = backend_api_base_url + '/v2/service?userid=' + user.id + '&limit=100';
+        let services_get_base_url = backend_api_base_url + '/v2/services?userid=' + user.id + '&limit=100';
 
+        /*let pods_post_url = backend_api_base_url + '/v2/pods';
+        let deployments_post_url = backend_api_base_url + '/v2/deployments';
+        let services_post_url = backend_api_base_url + '/v2/services';*/
 
-        //let gist_cluster_pods_url = pods_get_base_url + 'gist'
-        //let chula_cluster_pods_url = pods_get_base_url + 'chula'
-        //let um_cluster_pods_url = pods_get_base_url + 'um'
-
-        // let pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/';
-        // let gist_cluster_pods_url = pods_get_base_url + 'gist/pods';
-        // let chula_cluster_pods_url = pods_get_base_url + 'chula/pods';
-        // let um_cluster_pods_url = pods_get_base_url + 'um/pods';
+        let post_url = backend_api_base_url + '/v2';
 
         console.log("[INFO] Cluster URL: " + pods_get_base_url);
 
@@ -77,9 +69,7 @@ router.get('/', (req, res, next) => {
                                             USER_Deployment_List: USER_Deployment_List,
                                             /*UM_Pod_List: UM_Pod_List,
                                             CHULA_Pod_List: CHULA_Pod_List,*/
-                                            pods_post_url: pods_post_url,
-                                            deployments_post_url: deployments_post_url,
-                                            service_post_url: service_post_url
+                                            post_url: post_url
                                         });
                                     })
                             /*})*/

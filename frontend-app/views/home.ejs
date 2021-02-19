@@ -34,7 +34,7 @@
         </section>
     <% } else { %>
         <!-- Sidebar/menu -->
-        <nav class="w3-sidebar w3-collapse w3-white w3-animate-left"
+        <nav class="w3-sidebar w3-collapse w3-light-grey w3-animate-left"
              style="z-index:3;width:300px;background-color:#e6f5ff" id="mySidebar"><br>
             <div class="w3-container w3-row">
                 <div class="w3-col s4">
@@ -94,7 +94,8 @@
                     </tr>
                 <% }); %>
             </table>
-            <br><br><br>
+            <br>
+            <hr>
 
             <h4 style="background-color:#3399ff;color:white;">Workloads (Pods, Deployments, Services)</h4>
             <table id="workloadsTable" class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
@@ -138,7 +139,7 @@
         <div class="w3-container">
             <h4 style="background-color:#3399ff;color:white;">Create New Workload (Pod, Deployment, Service)</h4>
             <form id="deployForm" name="deployForm"
-                  action="<%= pods_post_url %>"
+                  action="<%= post_url %>"
                   method="post"
                   enctype="multipart/form-data"
                   onsubmit="return validateForm()"
@@ -165,9 +166,8 @@
                 <br><br><br>
                 <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
             </form>
-            <p id="pods_post" style="display:none"><%= pods_post_url %></p>
-            <p id="deployment_post" style="display:none"><%= deployments_post_url %></p>
-            <p id="service_post" style="display:none"><%= service_post_url %></p>
+
+            <p id="post_url" style="display:none"><%= post_url %></p>
         </div>
     </div>
     <% } %>
@@ -199,8 +199,7 @@
 
         //Create new workload
         function validateForm() {
-            //const post_url = document.getElementById("pods_post").innerText;
-            let post_url;
+            const post_url = document.getElementById("post_url").innerText;
             const user_id = document.forms["deployForm"]["userid"].value;
             const cluster_id = document.forms["deployForm"]["cluster"].value;
             const workload_type = document.forms["deployForm"]["workload_type"].value;
@@ -212,15 +211,7 @@
                 alert("New workload request sent to the server for User ID " + user_id);
             }
 
-            if (workload_type == "pod") {
-                post_url = document.getElementById("pods_post").innerText;
-            } else if (workload_type == "deployment") {
-                post_url = document.getElementById("deployment_post").innerText;
-            } else {
-                post_url = document.getElementById("service_post").innerText;
-            }
-
-            document.getElementById("deployForm").action = post_url + "?cluster=" + cluster_id + "&userid=" + user_id;
+            document.getElementById("deployForm").action = post_url + "/"+ workload_type.trim() + "s?cluster=" + cluster_id + "&userid=" + user_id;
             //window.location.href = post_url + "?cluster=" + cluster_id + "&userid=" + user_id;
         }
 
@@ -228,19 +219,21 @@
         function deleteRow(r) {
             //var i = r.parentNode.parentNode.rowIndex;
             const user_id = document.forms["deployForm"]["userid"].value;
-            let row = r.parentNode.parentNode;
-            let workload = row.querySelector('td').innerHTML;
-            let cluster = row.querySelector('td:nth-child(3)').innerHTML;
-            let workload_type = row.querySelector('td:nth-child(4)').innerHTML.toLowerCase();
+            const post_url = document.getElementById("post_url").innerText;
 
-            if (workload_type == "pod") {
-                alert(workload + " " + cluster + " " + user_id + " " + workload_type);
-            } else if (workload_type == "deployment") {
-                alert(workload + " " + cluster + " " + user_id + " " + workload_type);
-            } else {
-                alert(workload + " " + cluster + " " + user_id + " " + workload_type);
-            }
+            const row = r.parentNode.parentNode;
+            const workload = row.querySelector('td').innerHTML;
+            const cluster = row.querySelector('td:nth-child(3)').innerHTML;
+            const workload_type = row.querySelector('td:nth-child(4)').innerHTML.toLowerCase();
 
+            const delete_url = post_url + "/" + workload_type.trim() + "s?cluster=" + cluster + "&userid=" + user_id + "&name=" + workload;
+
+            // Call Backend API
+            fetch(delete_url, {method: 'DELETE'})
+                .then(res => res.json())
+                .then(res => console.log(res))
+
+            // Remove from the HTML table
             document.getElementById("workloadsTable").deleteRow(row.rowIndex);
         }
 
