@@ -29,18 +29,15 @@ router.get('/', (req, res, next) => {
 
         let cluster_get_url = backend_api_base_url + '/clusters';
 
-        let pods_post_url = backend_api_base_url + '/v2/pods';
+        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=100';
+        let deployments_get_base_url = backend_api_base_url + '/v2/deployments?userid=' + user.id + '&limit=100';
+        let services_get_base_url = backend_api_base_url + '/v2/services?userid=' + user.id + '&limit=100';
+
+        /*let pods_post_url = backend_api_base_url + '/v2/pods';
         let deployments_post_url = backend_api_base_url + '/v2/deployments';
+        let services_post_url = backend_api_base_url + '/v2/services';*/
 
-        let pods_get_base_url = backend_api_base_url + '/v2/pods?userid=' + user.id + '&limit=100';//&cluster=';
-        //let gist_cluster_pods_url = pods_get_base_url + 'gist'
-        //let chula_cluster_pods_url = pods_get_base_url + 'chula'
-        //let um_cluster_pods_url = pods_get_base_url + 'um'
-
-        // let pods_get_base_url = 'https://ofteinplusapi.main.202.28.193.102.xip.io/clusters/';
-        // let gist_cluster_pods_url = pods_get_base_url + 'gist/pods';
-        // let chula_cluster_pods_url = pods_get_base_url + 'chula/pods';
-        // let um_cluster_pods_url = pods_get_base_url + 'um/pods';
+        let post_url = backend_api_base_url + '/v2';
 
         console.log("[INFO] Cluster URL: " + pods_get_base_url);
 
@@ -54,12 +51,12 @@ router.get('/', (req, res, next) => {
                     .then(USER_Pod_List => {
                         console.log("[INFO] User Pods");
                         console.log(USER_Pod_List);
-                        /*fetch(um_cluster_pods_url)
+                        fetch(deployments_get_base_url)
                             .then(response => response.json())
-                            .then(UM_Pod_List => {
-                                console.log("[INFO] UM Cluster Pods");
-                                console.log(UM_Pod_List);
-                                fetch(chula_cluster_pods_url)
+                            .then(USER_Deployment_List => {
+                                console.log("[INFO] User Deployments");
+                                console.log(USER_Deployment_List);
+                                /*fetch(chula_cluster_pods_url)
                                     .then(response => response.json())
                                     .then(CHULA_Pod_List => {
                                         console.log("[INFO] CHULA Cluster Pods");
@@ -69,13 +66,13 @@ router.get('/', (req, res, next) => {
                                             is_authorized: is_authorized,
                                             Cluster_List: cluster_json,
                                             USER_Pod_List: USER_Pod_List,
+                                            USER_Deployment_List: USER_Deployment_List,
                                             /*UM_Pod_List: UM_Pod_List,
                                             CHULA_Pod_List: CHULA_Pod_List,*/
-                                            pods_post_url: pods_post_url,
-                                            deployments_post_url: deployments_post_url
+                                            post_url: post_url
                                         });
-                                    /*})
-                            })*/
+                                    })
+                            /*})*/
                         //res.render('home', {user: user, Cluster_List: cluster_json, GIST_Pod_List: GIST_Pod_List, UM_Pod_List: UM_Pod_List});
                     })
             })

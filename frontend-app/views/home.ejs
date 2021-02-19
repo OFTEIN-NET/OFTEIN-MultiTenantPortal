@@ -34,7 +34,7 @@
         </section>
     <% } else { %>
         <!-- Sidebar/menu -->
-        <nav class="w3-sidebar w3-collapse w3-white w3-animate-left"
+        <nav class="w3-sidebar w3-collapse w3-light-grey w3-animate-left"
              style="z-index:3;width:300px;background-color:#e6f5ff" id="mySidebar"><br>
             <div class="w3-container w3-row">
                 <div class="w3-col s4">
@@ -94,16 +94,18 @@
                     </tr>
                 <% }); %>
             </table>
-            <br><br><br>
+            <br>
+            <hr>
 
-            <h4 style="background-color:#3399ff;color:white;">Running Deployments (Pods, Deployments, Services)</h4>
-            <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
+            <h4 style="background-color:#3399ff;color:white;">Workloads (Pods, Deployments, Services)</h4>
+            <table id="workloadsTable" class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
                 <tr style="background-color:white;color:#3399ff;">
                     <th>Name</th>
                     <th>Creation Time</th>
                     <th>Cluster</th>
-                    <th>Kind</th>
+                    <th>Workload Type</th>
                     <th>Namespace</th>
+                    <th>Delete</th>
                 </tr>
                 <% if (USER_Pod_List[0] && USER_Pod_List[0].cluster) { %>
                     <% USER_Pod_List.forEach(function(USER_Pod_List) { %>
@@ -113,6 +115,19 @@
                             <td><%= USER_Pod_List.cluster %></td>
                             <td><%= USER_Pod_List.status.kind %> </td>
                             <td><%= USER_Pod_List.status.namespace %> </td>
+                            <td><input type="button" value="Delete" onclick="deleteRow(this)"></td>
+                        </tr>
+                    <% }); %>
+                <% } %>
+                <% if (USER_Deployment_List[0] && USER_Deployment_List[0].cluster) { %>
+                    <% USER_Deployment_List.forEach(function(USER_Deployment_List) { %>
+                        <tr>
+                            <td><%= USER_Deployment_List.name %></td>
+                            <td><%= USER_Deployment_List.created %> </td>
+                            <td><%= USER_Deployment_List.cluster %></td>
+                            <td><%= USER_Deployment_List.status.kind %> </td>
+                            <td><%= USER_Deployment_List.status.namespace %> </td>
+                            <td><input type="button" value="Delete" onclick="deleteRow(this)"></td>
                         </tr>
                     <% }); %>
                 <% } %>
@@ -122,20 +137,27 @@
         <hr>
 
         <div class="w3-container">
-            <h4 style="background-color:#3399ff;color:white;">Create new Deployment (Pod, Deployment, Service)</h4>
+            <h4 style="background-color:#3399ff;color:white;">Create New Workload (Pod, Deployment, Service)</h4>
             <form id="deployForm" name="deployForm"
-                  action="<%= pods_post_url %>"
+                  action="<%= post_url %>"
                   method="post"
                   enctype="multipart/form-data"
                   onsubmit="return validateForm()"
                   target="_blank"
             >
                 <!--target="_blank"-->
-                <label for="cluster">Select Deployment Cluster (Running):</label>
+                <label for="cluster">Select Cluster for Workload Deployment (Running):</label>
                 <select id="cluster" name="cluster">
                     <option value="chula">CHULA-Thailand</option>
                     <option value="gist" selected>GIST-Korea</option>
                     <option value="um">UM-Malaysia</option>
+                </select>
+                <br><br>
+                <label for="workload_type">Select Workload Type:</label>
+                <select id="workload_type" name="workload_type">
+                    <option value="pod" selected>Pod</option>
+                    <option value="deployment">Deployment</option>
+                    <option value="service">Service</option>
                 </select>
                 <br><br>
                 <label for="yaml">Select YAML File:</label>
@@ -144,7 +166,8 @@
                 <br><br><br>
                 <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
             </form>
-            <p id="yy" style="display:none"><%= pods_post_url %></p>
+
+            <p id="post_url" style="display:none"><%= post_url %></p>
         </div>
     </div>
     <% } %>
@@ -174,20 +197,44 @@
             overlayBg.style.display = "none";
         }
 
+        //Create new workload
         function validateForm() {
-            const post_url = document.getElementById("yy").innerText;
+            const post_url = document.getElementById("post_url").innerText;
             const user_id = document.forms["deployForm"]["userid"].value;
             const cluster_id = document.forms["deployForm"]["cluster"].value;
+            const workload_type = document.forms["deployForm"]["workload_type"].value;
 
             if (user_id == "" || user_id == null) {
                 alert("User ID must be specified.");
                 return false;
             } else {
-                alert("New Pod request sent to server for User ID " + user_id);
+                alert("New workload request sent to the server for User ID " + user_id);
             }
 
-            document.getElementById("deployForm").action = post_url + "?cluster=" + cluster_id + "&userid=" + user_id;
+            document.getElementById("deployForm").action = post_url + "/"+ workload_type.trim() + "s?cluster=" + cluster_id + "&userid=" + user_id;
             //window.location.href = post_url + "?cluster=" + cluster_id + "&userid=" + user_id;
+        }
+
+        //Delete existing workload
+        function deleteRow(r) {
+            //var i = r.parentNode.parentNode.rowIndex;
+            const user_id = document.forms["deployForm"]["userid"].value;
+            const post_url = document.getElementById("post_url").innerText;
+
+            const row = r.parentNode.parentNode;
+            const workload = row.querySelector('td').innerHTML;
+            const cluster = row.querySelector('td:nth-child(3)').innerHTML;
+            const workload_type = row.querySelector('td:nth-child(4)').innerHTML.toLowerCase();
+
+            const delete_url = post_url + "/" + workload_type.trim() + "s?cluster=" + cluster + "&userid=" + user_id + "&name=" + workload;
+
+            // Call Backend API
+            fetch(delete_url, {method: 'DELETE'})
+                .then(res => res.json())
+                .then(res => console.log(res))
+
+            // Remove from the HTML table
+            document.getElementById("workloadsTable").deleteRow(row.rowIndex);
         }
 
         /*function validateForm() {
