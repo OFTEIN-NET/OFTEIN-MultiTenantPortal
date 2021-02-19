@@ -146,8 +146,8 @@ exports.plugin = {
             .deleteNamespacedDeployment(pod, clusters[cluster].namespace)
             .then((res) => prettier_single(res, "Deployment", dev));
 
-        const upsertpod = (cluster, name, user, yaml) => {
-            const sql = `INSERT INTO new_schema.pods (cluster, name, user, yaml)
+        const upsertinfo = (type, cluster, name, user, yaml) => {
+            const sql = `INSERT INTO new_schema.${type}s (cluster, name, user, yaml)
                             VALUES
                               (?, ?, ?, ?)
                             ON DUPLICATE KEY UPDATE
@@ -158,18 +158,18 @@ exports.plugin = {
             return server.app.mysql.query(sql, [cluster, name, user, JSON.stringify(yaml), cluster, name, user, JSON.stringify(yaml)])
         }
 
-        const deletepodinfo = (cluster, name, user) => {
-            const sql = `DELETE FROM new_schema.pods WHERE cluster = ? AND name = ? AND user = ?`;
+        const deleteinfo = (type, cluster, name, user) => {
+            const sql = `DELETE FROM new_schema.${type}s WHERE cluster = ? AND name = ? AND user = ?`;
             return server.app.mysql.query(sql, [cluster, name, user])
         }
 
-        const getpodinfo = (cluster, name, user) => {
-            const sql = `SELECT * FROM new_schema.pods WHERE cluster = ? AND name = ? AND user = ?`;
+        const getinfo = (type, cluster, name, user) => {
+            const sql = `SELECT * FROM new_schema.${type}s WHERE cluster = ? AND name = ? AND user = ?`;
             return server.app.mysql.query(sql, [cluster, name, user])
         }
 
-        const getallpodbyuser = (user, cluster) => {
-            let sql = `SELECT * FROM new_schema.pods WHERE`;
+        const getallinfobyuser = (type, user, cluster) => {
+            let sql = `SELECT * FROM new_schema.${type}s WHERE`;
             if (cluster == null) sql += ` user = ?`;
             else sql += ` user = ? AND cluster = ?`;
             return server.app.mysql.query(sql, [user, cluster])
@@ -208,6 +208,121 @@ exports.plugin = {
                 }
             },
             {
+                path: "/v2/deployments",
+                method: "DELETE",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters)).required(),
+                            name: Joi.string().required()
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+                        return getinfo("deployment", request.query.cluster, request.query.name, request.query.userid)
+                            .then(async (result) => {
+                                await Promise.all(result.map(async (deployment) => {
+                                    const res = await server.inject({
+                                        method: "DELETE",
+                                        url: `/clusters/${deployment.cluster}/deployments/${deployment.name}`
+                                    });
+                                    await deleteinfo("deployment", deployment.cluster, deployment.name, deployment.user);
+                                    deployment.status = res.result;
+                                }));
+                                return result
+                            })
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
+                path: "/v2/deployments",
+                method: "GET",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+                        return getallinfobyuser("deployment", request.query.userid, request.query.cluster)
+                            .then(async (result) => {
+                                await Promise.all(result.map(async (deployment) => {
+                                    delete deployment.yaml;
+                                    const res = await server.inject({
+                                        method: "GET",
+                                        url: `/clusters/${deployment.cluster}/deployments/${deployment.name}`
+                                    });
+                                    deployment.status = res.result;
+                                }));
+                                return result
+                            })
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
+                path: "/v2/deployments",
+                method: "POST",
+                options: {
+                    payload: {
+                        maxBytes: 1024 * 1024 * 1,
+                        multipart: {output: "file"},
+                        parse: true
+                    },
+                    validate: {
+                        payload: Joi.object({
+                            yaml: Joi.any().meta({ swaggerType: "file" }).required()
+                        }),
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            userid: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+                        let res = await server.inject({
+                            method: "POST",
+                            url: `/clusters/${request.query.cluster}/deployments`,
+                            payload: request.payload
+                        });
+
+                        if (res.statusCode == "200") {
+                            const yaml = Yaml.safeLoad(FS.readFileSync(request.payload.yaml.path, 'utf8'));
+                            const deployment = {
+                                cluster: request.query.cluster,
+                                user: request.query.userid,
+                                yaml: yaml,
+                                name: yaml.metadata.name,
+                                created: new Date()
+                            }
+                            await upsertinfo("deployment", deployment.cluster, deployment.name, deployment.user, deployment.yaml);
+                        }
+
+                        return res.result
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
                 path: "/v2/pods",
                 method: "DELETE",
                 options: {
@@ -222,14 +337,14 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
                     try {
-                        return getpodinfo(request.query.cluster, request.query.name, request.query.userid)
+                        return getinfo("pod", request.query.cluster, request.query.name, request.query.userid)
                             .then(async (result) => {
                                 await Promise.all(result.map(async (pod) => {
                                     const res = await server.inject({
                                         method: "DELETE",
                                         url: `/clusters/${pod.cluster}/pods/${pod.name}`
                                     });
-                                    await deletepodinfo(pod.cluster, pod.name, pod.user);
+                                    await deleteinfo("pod", pod.cluster, pod.name, pod.user);
                                     pod.status = res.result;
                                 }));
                                 return result
@@ -255,7 +370,7 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
                     try {
-                        return getallpodbyuser(request.query.userid, request.query.cluster)
+                        return getallinfobyuser("pod", request.query.userid, request.query.cluster)
                             .then(async (result) => {
                                 await Promise.all(result.map(async (pod) => {
                                     delete pod.yaml;
@@ -311,7 +426,7 @@ exports.plugin = {
                                 name: yaml.metadata.name,
                                 created: new Date()
                             }
-                            await upsertpod(pod.cluster, pod.name, pod.user, pod.yaml);
+                            await upsertinfo("pod", pod.cluster, pod.name, pod.user, pod.yaml);
                         }
 
                         return res.result
@@ -540,4 +655,3 @@ exports.plugin = {
 
 
 }
-
