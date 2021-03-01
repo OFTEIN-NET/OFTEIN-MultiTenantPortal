@@ -75,20 +75,26 @@
             <div class="w3-row-padding w3-margin-bottom">
                 <div id="cluster-div" class="w3-container w3-center">
                     <p class="w3-section w3-round w3-panel w3-xlarge w3-text-white" style="background-color:#3399ff;">Kubernetes Cluster(s)</p>
-                    <table class="w3-table w3-bordered w3-border w3-centered w3-white" style="width:100%">
-                        <tr style="background-color:white;color:#3399ff;text-align:center;width:600px;"><th colspan="3">Kubernetes Cluster(s) Running Status</th></tr>
-                        <tr>
+                    <table class="w3-table w3-centered w3-border" style="width:100%; border: 1px solid lightgray;">
+                        <tr style="background-color:white;color:#3399ff;">
+                            <th colspan="3">Kubernetes Cluster(s) Running Status</th>
+                        </tr>
+                        <tr class="glow" style="text-align: center; border: 2px solid lightgray;">
                             <% Cluster_List.forEach(function(Cluster_List) { %>
-                                <td
-                                <% if (Cluster_List.running === true) { %>
-                                    style="width:200px;text-align:center;color:white;background-color:green;">
-                                    <%= Cluster_List.cluster %>
+                                <td class="w3-center"
+                                    <% if (Cluster_List.running === true) { %>
+                                        style="width:250px; border: 2px solid lightgray; background-color:green; color:white;">
+                                    <% } else{ %>
+                                        style="width:250px; border: 2px solid lightgray; background-color:red; color:white;">
+                                    <% } %>
+                                    <% if (Cluster_List.cluster === "chula") { %>
+                                        CHULA-Thailand
+                                    <% } else if (Cluster_List.cluster === "gist") { %>
+                                        GIST-Korea
+                                    <% } else { %>
+                                        UM-Malaysia
+                                    <% } %>
                                 </td>
-                                <% } else{ %>
-                                    style="width:200px;text-align:center;color:white;background-color:red;">
-                                    <%= Cluster_List.cluster %>
-                                </td>
-                                <% } %>
                             <% }); %>
                         </tr>
                     </table>
@@ -142,25 +148,35 @@
                           enctype="multipart/form-data"
                           onsubmit="return validateForm()"
                           target="_blank">
-                        <label for="cluster">Select Cluster for Workload Deployment (Running):</label>
-                        <select id="cluster" name="cluster">
-                            <option value="chula">CHULA-Thailand</option>
-                            <option value="gist" selected>GIST-Korea</option>
-                            <option value="um">UM-Malaysia</option>
-                        </select>
-                        <br><br>
-                        <label for="workload_type">Select Workload Type:</label>
-                        <select id="workload_type" name="workload_type">
-                            <option value="pod" selected>Pod</option>
-                            <option value="deployment">Deployment</option>
-                            <option value="service">Service</option>
-                        </select>
-                        <br><br>
-                        <label for="yaml">Select YAML File:</label>
-                        <input type="file" id="yaml" name="yaml" required>
+                        <table>
+                            <tr>
+                                <td class="w3-padding">
+                                    <label for="cluster">Select Cluster (Running):</label>
+                                    <select id="cluster" name="cluster">
+                                        <option value="chula">CHULA-Thailand</option>
+                                        <option value="gist" selected>GIST-Korea</option>
+                                        <option value="um">UM-Malaysia</option>
+                                    </select>
+                                </td>
+                                <td class="w3-padding">
+                                    <label for="workload_type">Select Workload Type:</label>
+                                    <select id="workload_type" name="workload_type">
+                                        <option value="pod" selected>Pod</option>
+                                        <option value="deployment">Deployment</option>
+                                        <option value="service">Service</option>
+                                    </select>
+                                </td>
+                                <td class="w3-padding">
+                                    <label for="yaml">Select YAML File:</label>
+                                    <input type="file" id="yaml" name="yaml" required>
+                                </td>
+                                <td>
+                                    <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
+                                </td>
+                            </tr>
+                        </table>
                         <input id="userid" name="userid" type="hidden" value="<%= user.id %>">
                         <br><br><br>
-                        <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
                     </form>
 
                     <p id="post_url" style="display:none"><%= post_url %></p>
