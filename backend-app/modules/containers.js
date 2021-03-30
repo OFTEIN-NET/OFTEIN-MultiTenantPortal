@@ -82,6 +82,7 @@ exports.plugin = {
                         resource.allocatable.cpu+= parseInt(node.status.allocatable.cpu);
                         resource.allocatable.memory+= parseFloat(node.status.allocatable.memory)/1024/1024;
                     })
+                    // resource = response
                 }).catch((error) => {
                     console.log(error)
                 })
@@ -120,6 +121,9 @@ exports.plugin = {
                 case "DeploymentList":
                     kind = "Deployment";
                     break;
+                // case "ServiceList":
+                //     kind = "Service";
+                //     break;
                 default:
                     kind = res.body.kind;
                     break;
@@ -144,6 +148,10 @@ exports.plugin = {
             .listNamespacedResourceQuota(clusters[cluster].namespace)
         const listnode = (cluster, dev = false) => clusters[cluster].coreapi
             .listNode()
+        const getnode = (cluster, node, dev = false) => clusters[cluster].coreapi
+            .readNode(node)
+        const getapp = (cluster, dev = false) => clusters[cluster].coreapi
+            .listPodForAllNamespaces()
         const listnamespacedResourceQuota = (cluster, dev = false) => clusters[cluster].coreapi
             .listNamespacedResourceQuota()
 
@@ -180,6 +188,31 @@ exports.plugin = {
             .deleteNamespacedDeployment(pod, clusters[cluster].namespace)
             .then((res) => prettier_single(res, "Deployment", dev));
 
+        //service
+        const createservice = (cluster, yaml, dev = false) => clusters[cluster].coreapi
+            .createNamespacedService(clusters[cluster].namespace, yaml)
+            .then((res) => prettier_single(res, "Service", dev));
+        const listservice = (cluster, dev = false) => clusters[cluster].coreapi
+            .listNamespacedService(clusters[cluster].namespace)
+            .then((res) => prettier(res, dev));
+        const getservice = (cluster, service, dev = false) => clusters[cluster].coreapi
+            .readNamespacedService(service, clusters[cluster].namespace)
+            .then((res) => prettier_single(res, "Service", dev));
+        const deleteservice = (cluster, service, dev = false) => clusters[cluster].coreapi
+            .deleteNamespacedService(service, clusters[cluster].namespace)
+            .then((res) => prettier_single(res, "Service", dev));
+
+        const upsertuserinfo = (user, role, admin) => {
+            const sql = `INSERT INTO new_schema.users (user, role, admin)
+                            VALUES
+                              (?, ?, ?)
+                            ON DUPLICATE KEY UPDATE
+                              user = ?,
+                              role = ?,
+                              admin = ?`
+            return server.app.mysql.query(sql, [user, role, admin, user, role, admin])
+        }
+
         const upsertinfo = (type, cluster, name, user, yaml) => {
             const sql = `INSERT INTO new_schema.${type}s (cluster, name, user, yaml)
                             VALUES
@@ -209,13 +242,102 @@ exports.plugin = {
             return server.app.mysql.query(sql, [user, cluster])
         }
 
-        server.route([
+        const getinfouser = (user) => {
+            const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
+            return server.app.mysql.query(sql, [user])
+        }
 
+        const isadmin = async (user) => {
+            let admin = await getinfouser(user)
+            if (admin.length == 0) return false;
+            if (admin.length > 0 && admin[0].role != "admin") return false;
+            return true;
+        }
+
+        const isuser = async(user) => {
+            let use = await getinfouser(user)
+            if (use.length == 0) return false;
+            return true;
+        }
+
+        server.route([
+            {
+                path: "/getresource/{cluster}",
+                options: {
+                    validate: {
+                        params: Joi.object({
+                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        })
+                    }
+                },
+                method: "GET",
+                handler: async (request, h) => {
+                    return getresource(request.params.cluster)
+                }
+            },
+            {
+                path: "/clusters/auth",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            userid: Joi.string().required()
+                        })
+                    }
+                },
+                method: "GET",
+                handler: async (request, h) => {
+                    if (!(await isuser(request.query.userid))) return Boom.unauthorized();
+                    return listclusters().catch((error) => {
+                        console.log(error)
+                        return "Error"
+                    })
+                }
+            },
+            {
+                path: "/isuser/{user}",
+                method: "GET",
+                handler: async (request, h) => {
+                    return isuser(request.params.user)
+                }
+            },
+            {
+                path: "/isadmin/{user}",
+                method: "GET",
+                handler: async (request, h) => {
+                    return isadmin(request.params.user)
+                }
+            },
+            {
+                path: "/users",
+                method: "GET",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            userid: Joi.string().required(),
+                            adminid: Joi.string().required()
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    let admin = await getinfouser(request.query.adminid)
+                    if (admin.length == 0) return Boom.badRequest(request.query.adminid+" is not exist.")
+                    if (admin.length > 0 && admin[0].role != "admin") return Boom.badRequest(request.query.adminid+" is not admin.")
+                    await upsertuserinfo(request.query.userid, "user", request.query.adminid)
+                    return "updated"
+                }
+            },
             {
                 path: "/test/{cluster}",
                 method: "GET",
                 handler: async (request, h) => {
-                    return getresource(request.params.cluster)
+                    return getapp(request.params.cluster)
+                }
+            },
+            {
+                path: "/getnode/{cluster}/nodes/{node}",
+                method: "GET",
+                handler: async (request, h) => {
+                    return getnode(request.params.cluster, request.params.node)
                 }
             },
             {
