@@ -202,15 +202,16 @@ exports.plugin = {
             .deleteNamespacedService(service, clusters[cluster].namespace)
             .then((res) => prettier_single(res, "Service", dev));
 
-        const upsertuserinfo = (user, role, admin) => {
-            const sql = `INSERT INTO new_schema.users (user, role, admin)
+        const upsertuserinfo = (user, role, admin, email) => {
+            const sql = `INSERT INTO new_schema.users (user, role, admin, email)
                             VALUES
-                              (?, ?, ?)
+                              (?, ?, ?, ?)
                             ON DUPLICATE KEY UPDATE
                               user = ?,
                               role = ?,
-                              admin = ?`
-            return server.app.mysql.query(sql, [user, role, admin, user, role, admin])
+                              admin = ?,
+                              email = ?`
+            return server.app.mysql.query(sql, [user, role, admin, email, user, role, admin, email])
         }
 
         const upsertinfo = (type, cluster, name, user, yaml) => {

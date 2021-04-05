@@ -15,9 +15,12 @@
     "axios": "^0.20.0",
     "glob": "^7.1.6",
     "handlebars": "^4.7.6",
+    "hapi-auth-cookie-jwt": "^3.0.1",
     "hapi-cron": "^1.1.0",
     "joi": "^17.3.0",
+    "jsonwebtoken": "^8.5.1",
     "mysql": "^2.18.1",
+    "nodemailer": "^6.5.0",
     "request": "^2.88.2",
     "yamljs": "^0.3.0"
   },
