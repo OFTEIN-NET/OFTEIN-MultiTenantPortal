@@ -23,9 +23,11 @@ exports.plugin = {
             const url = clusterinfo.clusters[0].cluster.server;
             const k8sAppsApi = cluster.makeApiClient(k8s.AppsV1Api);
             const k8sCoreApi = cluster.makeApiClient(k8s.CoreV1Api);
+            const k8sNetworkingApi = cluster.makeApiClient(k8s.NetworkingV1beta1Api);
             return {
                 appsapi: k8sAppsApi,
                 coreapi: k8sCoreApi,
+                networkingapi: k8sNetworkingApi,
                 namespace: namespace,
                 url: url
             }
@@ -36,8 +38,8 @@ exports.plugin = {
         let clusters = {
             "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
             "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
-            // "gist_demo": createApiNamespace('./configs/config_gist_old.yaml', "default"),
-            "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns")
+            "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns"),
+            "demo": createApiNamespace('./configs/config_demo.yaml', "default")
         };
 
         // Define Function
@@ -121,9 +123,9 @@ exports.plugin = {
                 case "DeploymentList":
                     kind = "Deployment";
                     break;
-                // case "ServiceList":
-                //     kind = "Service";
-                //     break;
+                case "ServiceList":
+                    kind = "Service";
+                    break;
                 default:
                     kind = res.body.kind;
                     break;
@@ -188,6 +190,20 @@ exports.plugin = {
             .deleteNamespacedDeployment(pod, clusters[cluster].namespace)
             .then((res) => prettier_single(res, "Deployment", dev));
 
+        //ingress
+        const createingress = (cluster, yaml, dev = false) => clusters[cluster].networkingapi
+            .createNamespacedIngress(clusters[cluster].namespace, yaml)
+            .then((res) => prettier_single(res, "Ingress", dev));
+        const listingress = (cluster, dev = false) => clusters[cluster].networkingapi
+            .listNamespacedIngress(clusters[cluster].namespace)
+            .then((res) => prettier(res, dev));
+        const getingress = (cluster, service, dev = false) => clusters[cluster].networkingapi
+            .readNamespacedIngress(service, clusters[cluster].namespace)
+            .then((res) => prettier_single(res, "Ingress", dev));
+        const deleteingress = (cluster, service, dev = false) => clusters[cluster].networkingapi
+            .deleteNamespacedIngress(service, clusters[cluster].namespace)
+            .then((res) => prettier_single(res, "Ingress", dev));
+
         //service
         const createservice = (cluster, yaml, dev = false) => clusters[cluster].coreapi
             .createNamespacedService(clusters[cluster].namespace, yaml)
@@ -248,18 +264,7 @@ exports.plugin = {
             return server.app.mysql.query(sql, [user])
         }
 
-        const isadmin = async (user) => {
-            let admin = await getinfouser(user)
-            if (admin.length == 0) return false;
-            if (admin.length > 0 && admin[0].role != "admin") return false;
-            return true;
-        }
 
-        const isuser = async(user) => {
-            let use = await getinfouser(user)
-            if (use.length == 0) return false;
-            return true;
-        }
 
         server.route([
             {
@@ -274,38 +279,6 @@ exports.plugin = {
                 method: "GET",
                 handler: async (request, h) => {
                     return getresource(request.params.cluster)
-                }
-            },
-            {
-                path: "/clusters/auth",
-                options: {
-                    validate: {
-                        query: Joi.object({
-                            userid: Joi.string().required()
-                        })
-                    }
-                },
-                method: "GET",
-                handler: async (request, h) => {
-                    if (!(await isuser(request.query.userid))) return Boom.unauthorized();
-                    return listclusters().catch((error) => {
-                        console.log(error)
-                        return "Error"
-                    })
-                }
-            },
-            {
-                path: "/isuser/{user}",
-                method: "GET",
-                handler: async (request, h) => {
-                    return isuser(request.params.user)
-                }
-            },
-            {
-                path: "/isadmin/{user}",
-                method: "GET",
-                handler: async (request, h) => {
-                    return isadmin(request.params.user)
                 }
             },
             {
@@ -808,12 +781,181 @@ exports.plugin = {
                 handler: async (request, h) => getpod(request.params.cluster, request.params.pod, request.query.dev)
                     .catch((error) => handlek8serror(error))
             },
+            {
+                path: "/v3/{type}",
+                method: "GET",
+                options: {
+                    validate: {
+                        params: Joi.object({
+                            type: Joi.string().valid("deployment", "pod", "service", "ingress")
+                        }),
+                        query: Joi.object({
+                            dev: Joi.boolean().default(false),
+                            token: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+
+                        const type = request.params.type;
+                        const userid = request.auth.credentials.user;
+                        const cluster = request.query.cluster;
+
+                        let querydata = await getallinfobyuser(type, userid, cluster);
+
+                        await Promise.all(
+                            querydata.map(async (data) => {
+                                delete data.yaml;
+                                const name = data.name;
+                                const cluster = data.cluster;
+                                switch (type) {
+                                    case "pod":
+                                        data.status = await getpod(cluster, name)
+                                            .catch((error) => handlek8serror(error))
+                                        break;
+                                    case "deployment":
+                                        data.status = await getdeployment(cluster, name)
+                                            .catch((error) => handlek8serror(error))
+                                        break;
+                                    case "service":
+                                        data.status = await getservice(cluster, name)
+                                            .catch((error) => handlek8serror(error))
+                                        break;
+                                    case "ingress":
+                                        data.status = await getingress(cluster, name)
+                                            .catch((error) => handlek8serror(error))
+                                        break;
+                                }
+                            })
+                        );
+
+                        return querydata;
+
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
+                path: "/v3/{type}",
+                method: "POST",
+                options: {
+                    validate: {
+                        payload: Joi.object({
+                            yaml: Joi.any().meta({ swaggerType: "file" }).required()
+                        }),
+                        params: Joi.object({
+                            type: Joi.string().valid("deployment", "pod", "service", "ingress")
+                        }),
+                        query: Joi.object({
+                            token: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters)).required()
+                        })
+                    },
+                    payload: {
+                        maxBytes: 1024 * 1024 * 1,
+                        multipart: {output: "file"},
+                        parse: true
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+
+                        const type = request.params.type;
+                        const userid = request.auth.credentials.user;
+                        const cluster = request.query.cluster;
+                        const yaml = request.payload.yaml;
+
+                        const yamlfile = Yaml.safeLoad(FS.readFileSync(yaml.path, 'utf8'));
+                        const name = yamlfile.metadata.name;
+
+                        let res;
+
+                        switch (type) {
+                            case "pod":
+                                res = createpod(cluster, yamlfile);
+                                break;
+                            case "deployment":
+                                res = createdeployment(cluster, yamlfile);
+                                break;
+                            case "service":
+                                res = createservice(cluster, yamlfile);
+                                break;
+                            case "ingress":
+                                res = createingress(cluster, yamlfile);
+                                break;
+                        }
+
+                        return await res.then(async (res) => {
+                            await upsertinfo(type, cluster, name, userid, yamlfile);
+                            return res
+                        }).catch((error) => handlek8serror(error))
+
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
+            {
+                path: "/v3/{type}",
+                method: "DELETE",
+                options: {
+                    validate: {
+                        params: Joi.object({
+                            type: Joi.string().valid("deployment", "pod", "service", "ingress")
+                        }),
+                        query: Joi.object({
+                            token: Joi.string().required(),
+                            cluster: Joi.string().valid(...Object.keys(clusters)).required(),
+                            name: Joi.string().required()
+                        })
+                    }
+                },
+                handler: async (request, h) => {
+                    try {
+
+                        const type = request.params.type;
+                        const userid = request.auth.credentials.user;
+                        const cluster = request.query.cluster;
+                        const name = request.query.name;
+
+                        let res;
+
+                        switch (type) {
+                            case "pod":
+                                res = deletepod(cluster, name);
+                                break;
+                            case "deployment":
+                                res = deletedeployment(cluster, name);
+                                break;
+                            case "service":
+                                res = deleteservice(cluster, name);
+                                break;
+                            case "ingress":
+                                res = deleteingress(cluster, name);
+                                break;
+                        }
+
+                        return await res.then(async (res) => {
+                            await deleteinfo(type, cluster, name, userid);
+                            return res
+                        }).catch((error) => handlek8serror(error))
+
+                    } catch (err) {
+                        // console.log(err)
+                        return err.message;
+                    }
+
+                }
+            },
         ]);
 
-
-        server.route([
-
-        ])
 
     }
 

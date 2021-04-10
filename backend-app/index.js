@@ -49,51 +49,57 @@ main = async () => {
 
     const Glob = require('glob');
 
-    await server.register(require('hapi-auth-cookie-jwt'))
-
-    const people = { // our "users database"
-        1: {
-            id: 1,
-            name: 'Jen Jones'
-        }
-    };
+    await server.register(require('hapi-auth-jwt2'))
 
     const jwt = require('jsonwebtoken');
 
-    server.app.jwt = function (obj) {
-        return jwt.sign(obj, privateKey)
+    const encryptbase64 = require('./configs/encryptbase64');
+    //  node -e "console.log(require('crypto').randomBytes(32).toString('base64'));"
+    const secret = encryptbase64.tokensecret;
+    const accountvalidationsecret = encryptbase64.validationtokensecret;
+
+    server.app.secret = secret;
+    server.app.accountvalidationsecret = accountvalidationsecret;
+
+    const validate = async function (decoded, request, h) {
+
+        const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
+        let res = await server.app.mysql.query(sql, [decoded.user])
+        if (res.length == 1) {
+            return { isValid: res[0].role == 'admin' || res[0].role == 'user' }
+        } else if (res.length == 0 && decoded.user && decoded.email) {
+            const sql = `INSERT INTO new_schema.users (user, email)
+                            VALUES
+                              (?, ?)
+                            ON DUPLICATE KEY UPDATE
+                              user = ?,
+                              email = ?`
+            await server.app.mysql.query(sql, [decoded.user, decoded.email, decoded.user, decoded.email])
+        }
+        return { isValid: false }
+
     };
 
-    server.app.verify = function (token) {
-        return jwt.verify(token, privateKey)
-    }
+    const simpleValidate = async function (decoded, request, h) {
 
-    const privateKey = "iotcloudserve"
+        return { isValid: true }
 
-    var validate = function (decodedToken, callback) {
-
-        var error = null;
-        // var credentials = accounts[decodedToken.accountId] || {};
-
-        const credentials = {
-            "user": 1,
-            "email": "benzbank@gmail.com"
-        }
-
-        if (!credentials) {
-            return callback(error, false, credentials);
-        }
-
-        return callback(error, true, credentials)
     };
 
+    server.auth.strategy('jwt', 'jwt',
+        { key: secret,
+            validate
+        });
 
-    server.auth.strategy('token', 'jwt-cookie', {
-        key: privateKey,
-        validateFunc: validate
-    });
+    server.auth.strategy('simplejwt', 'jwt',
+        { key: secret, validate: simpleValidate
+        });
 
-    server.auth.default('token');
+    server.auth.strategy('accountvalidatejwt', 'jwt',
+        { key: accountvalidationsecret, validate: simpleValidate
+        });
+
+    server.auth.default('jwt');
 
     server.route([
         {
@@ -103,38 +109,12 @@ main = async () => {
             }
         },
         {
-            method: 'GET', path: '/restricted', config: { auth: 'token' },
+            method: 'GET', path: '/tokenfortesting', config: { auth: false},
             handler: function(request, h) {
-                const response = h.response({text: 'You used a Token!'});
-                return response;
-            }
-        },
-        {
-            method: 'GET', path: '/login', config: { auth: false },
-            handler: function(request, h) {
-
-                credential = {
-                    "user": 1,
-                    "email": "benzbank@gmail.com"
-                }
-
-                h.state('access_token', jwt.sign(credential, privateKey), {
-                    // isSecure: request.info.host != 'localhost:8000',
-                    isHttpOnly: true,
-                    ttl: 1000*5 // 60 Minutes
-                });
-                return h.response('Logged in!');
-            }
-        },
-        {
-            method: 'GET', path: '/logout', config: { auth: false },
-            handler: function(request, h) {
-                h.state('access_token', null,{
-                    isSecure: false,
-                    isHttpOnly: true,
-                    ttl: 0
-                });
-                return h.response('Logged out!');
+                const obj   = { user: "101350982794886862258", "email":"kittipat.sae@gmail.com" };
+                const token = jwt.sign(obj, secret, {
+                    expiresIn: 60*60*24});
+                return token
             }
         }
     ]);

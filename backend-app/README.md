@@ -5,8 +5,34 @@
 The example deployment is running on the Google Cloud Platform and accessible 
 through this following information:
 
-`host`: https://ofteinplusapi.main.202.28.193.102.xip.io/ <br>
+`host`: https://api.iotcloudserve.net/ <br>
+`frontend`: https://oftein.iotcloudserve.net <br>
 `cluster`: `chula`, `gist`, `um`
+
+## OFTEIN-Plusplus V3
+
+Method | Auth-Level | URL | Description | Payload | Params | Query | Example
+--- | --- | --- | --- | --- | --- | --- | ---
+GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | 
+POST | `admin`<br>`user` | `host`/v3/pod | create a pod | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/pod | delete specific pod | - | - | `cluster`<br>`token`<br>`name` | 
+GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` | 
+POST | `admin`<br>`user` | `host`/v3/deployment | create a deployment | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/deployment | delete specific deployment | - | - | `cluster`<br>`token`<br>`name` | 
+GET | `admin`<br>`user` | `host`/v3/service | view all services | - | - | `cluster`<br>`token` | 
+POST | `admin`<br>`user` | `host`/v3/service | create a service | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/service | delete specific service | - | - | `cluster`<br>`token`<br>`name` | 
+GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cluster`<br>`token` | 
+POST | `admin`<br>`user` | `host`/v3/ingress | create an ingress | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/ingress | delete specific ingress | - | - | `cluster`<br>`token`<br>`name` | 
+
+Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `user`<br>`token` | 
+GET | `admin` | `host`/demoteaccount | demote specific account | - | - | `user`<br>`token` | 
+GET* | `-` | `host`/verifyaccount | verify specific account | - | - | `token` | 
+
+* verifyaccount api must use specific token generated from accountvalidationsecret
 
 ## OFTEIN-Plusplus V2
 
