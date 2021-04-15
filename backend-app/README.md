@@ -9,6 +9,10 @@ through this following information:
 `frontend`: https://oftein.iotcloudserve.net <br>
 `cluster`: `chula`, `gist`, `um`
 
+There are 2 ways to add more new users.
+* A new user selects the admin `/admins` then uses the api `/sendemail` and waits for admin verification.
+* A new user 
+
 ## OFTEIN-Plusplus V3
 
 Method | Auth-Level | URL | Description | Payload | Params | Query | Example
@@ -26,15 +30,21 @@ GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cl
 POST | `admin`<br>`user` | `host`/v3/ingress | create an ingress | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/ingress | delete specific ingress | - | - | `cluster`<br>`token`<br>`name` | 
 
+## New user asking for permission
 Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
 --- | --- | --- | --- | --- | --- | --- | --- | ---
-GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `user`<br>`token` | 
-GET | `admin` | `host`/demoteaccount | demote specific account | - | - | `user`<br>`token` | 
-GET* | `-` | `host`/verifyaccount | verify specific account | - | - | `token` | 
+GET | `authed`<br>`admin`<br>`user` | `host`/admins | <ul><li>to list all admins</li><li>to let authed-user selecting admin</li></ul> | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
+GET | `authed` | `host`/sendemail | authed user ask for permission | - | - | `admin`<br>`token` | `admin` must be userid (selected from /admins)
 
-* verifyaccount api must use specific token generated from accountvalidationsecret
+## Admin listing all users and promoting by himself
+Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `admin` | `host`/users | to list all users for maintenance | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
+GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `user`<br>`token` | `user` must be userid
+GET | `admin` | `host`/demoteaccount | demote specific account | - | - | `user`<br>`token` | `user` must be userid
 
-## OFTEIN-Plusplus V2
+
+## OFTEIN-Plusplus V2 
 
 Method | URL | Description | Payload | Params | Query | Example
 --- | --- | --- | --- | --- | --- | ---

@@ -39,7 +39,7 @@ exports.plugin = {
             "chula": createApiNamespace('./configs/config_chula.yaml', "chula-ofteinplusplus-fedns"),
             "gist": createApiNamespace('./configs/config_gist.yaml', "gist-ofteinplusplus-fedns"),
             "um": createApiNamespace('./configs/config_um.yaml', "um-ofteinplusplus-fedns"),
-            "demo": createApiNamespace('./configs/config_demo.yaml', "default")
+            // "demo": createApiNamespace('./configs/config_demo.yaml', "default")
         };
 
         // Define Function
@@ -282,22 +282,45 @@ exports.plugin = {
                 }
             },
             {
+                path: "/admins",
+                method: "GET",
+                options: {
+                    validate: {
+                        query: Joi.object({
+                            limit: Joi.number().min(0).max(10).default(10),
+                            page: Joi.number().min(1).default(1)
+                        })
+                    },
+                    auth: 'simplejwt',
+                },
+                handler: async (request, h) => {
+                    const limit = request.query.limit;
+                    const page = request.query.page;
+                    let sql = 'SELECT * FROM new_schema.users WHERE role = \'admin\'';
+                    sql += ` LIMIT ${limit} OFFSET ${(page - 1) * limit};`;
+                    let res = await server.app.mysql.query(sql);
+                    return res;
+                }
+            },
+            {
                 path: "/users",
                 method: "GET",
                 options: {
                     validate: {
                         query: Joi.object({
-                            userid: Joi.string().required(),
-                            adminid: Joi.string().required()
+                            limit: Joi.number().min(0).max(10).default(10),
+                            page: Joi.number().min(1).default(1)
                         })
-                    }
+                    },
+                    auth: 'adminonly'
                 },
                 handler: async (request, h) => {
-                    let admin = await getinfouser(request.query.adminid)
-                    if (admin.length == 0) return Boom.badRequest(request.query.adminid+" is not exist.")
-                    if (admin.length > 0 && admin[0].role != "admin") return Boom.badRequest(request.query.adminid+" is not admin.")
-                    await upsertuserinfo(request.query.userid, "user", request.query.adminid)
-                    return "updated"
+                    const limit = request.query.limit;
+                    const page = request.query.page;
+                    let sql = 'SELECT * FROM new_schema.users';
+                    sql += ` LIMIT ${limit} OFFSET ${(page - 1) * limit};`;
+                    let res = await server.app.mysql.query(sql);
+                    return res;
                 }
             },
             {

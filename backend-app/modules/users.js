@@ -33,9 +33,11 @@ exports.plugin = {
                 options: {
                     validate: {
                         query: Joi.object({
-                            user: Joi.string().required()
+                            user: Joi.string().required(),
+                            admin: Joi.boolean().default(false)
                         })
-                    }
+                    },
+                    auth: 'adminonly'
                 },
                 handler: async (request, h) => {
 
@@ -46,7 +48,10 @@ exports.plugin = {
 
                     accountuser = accountuser[0];
 
-                    if (accountuser.role != "authed") return Boom.badRequest("This account role is not authed which is not ready to be promoted.")
+                    if (accountuser.role != "authed" && !(accountuser.role == "user" && request.query.admin === true)) return Boom.badRequest("This account role is not authed which is not ready to be promoted.")
+
+                    let role = "user";
+                    if (request.query.admin === true) role = "admin"
 
                     const user = request.query.user;
                     const sql = `INSERT INTO new_schema.users (user, role, admin)
@@ -56,7 +61,7 @@ exports.plugin = {
                               user = ?,
                               role = ?,
                               admin = ?`
-                    await server.app.mysql.query(sql, [user, "user", request.auth.credentials.user, user, "user", request.auth.credentials.user])
+                    await server.app.mysql.query(sql, [user, role, request.auth.credentials.user, user, role, request.auth.credentials.user])
                         .catch((error) => console.log(error))
 
                     return "promoted user."
@@ -70,7 +75,8 @@ exports.plugin = {
                         query: Joi.object({
                             user: Joi.string().required()
                         })
-                    }
+                    },
+                    auth: 'adminonly'
                 },
                 handler: async (request, h) => {
 
@@ -155,7 +161,7 @@ exports.plugin = {
 
                     //Email and Text Preparation
 
-                    const username = request.auth.credentials.name;
+                    const name = request.auth.credentials.name;
                     const useremail = request.auth.credentials.email;
 
                     admintovalidatecredential = {
@@ -164,14 +170,14 @@ exports.plugin = {
                     }
                     const token = genverifytoken(admintovalidatecredential)
 
-                    const text = `${username} from ${useremail} ask you for permission to use iotcloudserve.net <br>` +
+                    const text = `${name} from ${useremail} ask you for permission to use iotcloudserve.net <br>` +
                         `<a href="https://api.iotcloudserve.net/verifyaccount?token=${token}">click here to verify</a>.<br>` +
                         `Best regards,`
 
                     await iotcloudservetransport.sendMail({
                         from: 'noreply@iotcloudserve.net',
                         to: adminuser.email,
-                        subject: `${username} from ${useremail} ask you for permission to use iotcloudserve.net`,
+                        subject: `${name} from ${useremail} ask you for permission to use iotcloudserve.net`,
                         html: text,
                     }).catch((error) => {
                         console.log(error)

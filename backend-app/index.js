@@ -82,7 +82,31 @@ main = async () => {
 
     const simpleValidate = async function (decoded, request, h) {
 
+        const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
+        let res = await server.app.mysql.query(sql, [decoded.user])
+
+        if (res.length == 0) {
+            const sql = `INSERT INTO new_schema.users (user, email)
+                            VALUES
+                              (?, ?)
+                            ON DUPLICATE KEY UPDATE
+                              user = ?,
+                              email = ?`
+            await server.app.mysql.query(sql, [decoded.user, decoded.email, decoded.user, decoded.email])
+        }
+
         return { isValid: true }
+
+    };
+
+    const adminValidate = async function (decoded, request, h) {
+
+        const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
+        let res = await server.app.mysql.query(sql, [decoded.user])
+        if (res.length == 1) {
+            return { isValid: res[0].role == 'admin' }
+        }
+        return { isValid: false }
 
     };
 
@@ -99,6 +123,10 @@ main = async () => {
         { key: accountvalidationsecret, validate: simpleValidate
         });
 
+    server.auth.strategy('adminonly', 'jwt',
+        { key: secret, validate: adminValidate
+        });
+
     server.auth.default('jwt');
 
     server.route([
@@ -106,15 +134,6 @@ main = async () => {
             method: "GET", path: "/", config: { auth: false },
             handler: function(request, h) {
                 return {text: 'Token not required'};
-            }
-        },
-        {
-            method: 'GET', path: '/tokenfortesting', config: { auth: false},
-            handler: function(request, h) {
-                const obj   = { user: "101350982794886862258", "email":"kittipat.sae@gmail.com" };
-                const token = jwt.sign(obj, secret, {
-                    expiresIn: 60*60*24});
-                return token
             }
         }
     ]);
