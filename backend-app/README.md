@@ -9,18 +9,18 @@ through this following information:
 `frontend`: https://oftein.iotcloudserve.net <br>
 `cluster`: `chula`, `gist`, `um`
 
-There are 4 types user in our scenario.
-* `public`: A person who haven't logged in.
+There are 4 user types in our scenario.
+* `public`: A person who hasn't logged in yet.
 * `authed`: A person who has logged in, but has not yet been verified by admin.
 * `user`: A person who has logged in and been verified by admin.
 * `admin`
 
-There are 5 ways to create/promote new user.
+There are 4 ways to create/promote new user.
 * `public` logins
-    * then `authed` sends email to admin via /sendemail .
-    * then `admin` checks email and clicks the verification link inside.
+    * then `authed` sends verification-email to admin-email via `/sendemail` .
+    * then `admin` checks verification-email and clicks the verification-link inside.
 * `admin` lists all users via `/users`
-    * then `admin` intentionally pick user then promotes specific user to be `user` or `admin` via `/promoteaccount`.
+    * then `admin` intentionally promotes specific user to be `user` or `admin` via `/promoteaccount`.
 * `admin` promotes `user` to be `admin` via `/promoteaccount`.
 * `admin` adds `public` to be `user` or `admin` directly via `/promoteaccount`.
 
@@ -32,18 +32,18 @@ There is only 1 way to demote user.
 
 ## OFTEIN-Plusplus V3
 
-Method | Auth-Level | URL | Description | Payload | Params | Query | Example
---- | --- | --- | --- | --- | --- | --- | ---
-GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | 
+Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | | `cluster` is not required
 POST | `admin`<br>`user` | `host`/v3/pod | create a pod | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/pod | delete specific pod | - | - | `cluster`<br>`token`<br>`name` | 
-GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` | 
+GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` |  | `cluster` is not required
 POST | `admin`<br>`user` | `host`/v3/deployment | create a deployment | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/deployment | delete specific deployment | - | - | `cluster`<br>`token`<br>`name` | 
-GET | `admin`<br>`user` | `host`/v3/service | view all services | - | - | `cluster`<br>`token` | 
+GET | `admin`<br>`user` | `host`/v3/service | view all services | - | - | `cluster`<br>`token` |  | `cluster` is not required
 POST | `admin`<br>`user` | `host`/v3/service | create a service | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/service | delete specific service | - | - | `cluster`<br>`token`<br>`name` | 
-GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cluster`<br>`token` | 
+GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cluster`<br>`token` |  | `cluster` is not required
 POST | `admin`<br>`user` | `host`/v3/ingress | create an ingress | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/ingress | delete specific ingress | - | - | `cluster`<br>`token`<br>`name` | 
 
@@ -65,7 +65,7 @@ GET | `authed` | `host`/sendemail | `authed` asks for permission | - | - | `admi
 ## Admin listing all users and promoting by himself
 Method | Auth-Level | URL | Description | Payload | Params | Query | Remark | Example
 --- | --- | --- | --- | --- | --- | --- | --- | ---
-GET | `admin` | `host`/users | to list all users for maintenance | - | - | `page`<br>`limit`<br>`token` | `page` must be number and `limit` are not required
+GET | `admin` | `host`/users | to list all users for maintenance | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
 GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `email`<br>`admin`<br>`token` | `admin` must be boolean in order to set to be admin or not (default is false) and email` must be user-email
 GET | `admin` | `host`/demoteaccount | demote specific account | - | - | `email`<br>`token` | `email` must be user-email
 
