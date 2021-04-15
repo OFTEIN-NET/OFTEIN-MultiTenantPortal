@@ -33,7 +33,7 @@ exports.plugin = {
                 options: {
                     validate: {
                         query: Joi.object({
-                            user: Joi.string().required(),
+                            email: Joi.string().email({ tlds: { allow: false } }).required(),
                             admin: Joi.boolean().default(false)
                         })
                     },
@@ -41,27 +41,18 @@ exports.plugin = {
                 },
                 handler: async (request, h) => {
 
-                    //fetch account
-                    const sqlfetchaccount = `SELECT * FROM new_schema.users WHERE user = ?`;
-                    let accountuser = await server.app.mysql.query(sqlfetchaccount, [request.query.user])
-                    if (accountuser.length != 1) return Boom.badRequest("Wrong account userid")
-
-                    accountuser = accountuser[0];
-
-                    if (accountuser.role != "authed" && !(accountuser.role == "user" && request.query.admin === true)) return Boom.badRequest("This account role is not authed which is not ready to be promoted.")
-
                     let role = "user";
                     if (request.query.admin === true) role = "admin"
 
-                    const user = request.query.user;
-                    const sql = `INSERT INTO new_schema.users (user, role, admin)
+                    const email = request.query.email;
+                    const sql = `INSERT INTO new_schema.users (email, role, admin)
                             VALUES
                               (?, ?, ?)
                             ON DUPLICATE KEY UPDATE
-                              user = ?,
+                              email = ?,
                               role = ?,
                               admin = ?`
-                    await server.app.mysql.query(sql, [user, role, request.auth.credentials.user, user, role, request.auth.credentials.user])
+                    await server.app.mysql.query(sql, [email, role, request.auth.credentials.email, email, role, request.auth.credentials.email])
                         .catch((error) => console.log(error))
 
                     return "promoted user."
@@ -73,7 +64,7 @@ exports.plugin = {
                 options: {
                     validate: {
                         query: Joi.object({
-                            user: Joi.string().required()
+                            email: Joi.string().email({ tlds: { allow: false } }).required()
                         })
                     },
                     auth: 'adminonly'
@@ -81,22 +72,22 @@ exports.plugin = {
                 handler: async (request, h) => {
 
                     //fetch account
-                    const sqlfetchaccount = `SELECT * FROM new_schema.users WHERE user = ?`;
-                    let accountuser = await server.app.mysql.query(sqlfetchaccount, [request.query.user])
-                    if (accountuser.length != 1) return Boom.badRequest("Wrong account userid")
+                    const sqlfetchaccount = `SELECT * FROM new_schema.users WHERE email = ?`;
+                    let accountuser = await server.app.mysql.query(sqlfetchaccount, [request.query.email])
+                    if (accountuser.length != 1) return Boom.badRequest("Wrong account email")
 
                     accountuser = accountuser[0];
 
-                    if (accountuser.role != "user") return Boom.badRequest("This account role is not user which is not ready to be demoted.")
+                    if (accountuser.role != "user") return Boom.badRequest("This account role is not user which is not ready to be demoted. Or you cannot demote admin.")
 
-                    const user = request.query.user;
-                    const sql = `INSERT INTO new_schema.users (user, role)
+                    const email = request.query.email;
+                    const sql = `INSERT INTO new_schema.users (email, role)
                             VALUES
                               (?, ?)
                             ON DUPLICATE KEY UPDATE
-                              user = ?,
+                              email = ?,
                               role = ?`
-                    await server.app.mysql.query(sql, [user, "authed", user, "authed"])
+                    await server.app.mysql.query(sql, [email, "authed", email, "authed"])
                         .catch((error) => console.log(error))
 
                     return "demoted user."
@@ -111,25 +102,25 @@ exports.plugin = {
                 handler: async (request, h) => {
 
                     //fetch account
-                    const sqlfetchaccount = `SELECT * FROM new_schema.users WHERE user = ?`;
-                    let accountuser = await server.app.mysql.query(sqlfetchaccount, [request.auth.credentials.user])
-                    if (accountuser.length != 1) return Boom.badRequest("Wrong account userid")
+                    const sqlfetchaccount = `SELECT * FROM new_schema.users WHERE email = ?`;
+                    let accountuser = await server.app.mysql.query(sqlfetchaccount, [request.auth.credentials.email])
+                    if (accountuser.length != 1) return Boom.badRequest("Wrong account email")
 
                     accountuser = accountuser[0];
 
                     if (accountuser.role != "authed") return Boom.badRequest("This account role is not authed which is not ready to be promoted.")
 
-                    const user = request.auth.credentials.user;
+                    const email = request.auth.credentials.email;
                     const admin = request.auth.credentials.admin;
 
-                    const sql = `INSERT INTO new_schema.users (user, role, admin)
+                    const sql = `INSERT INTO new_schema.users (email, role, admin)
                             VALUES
                               (?, ?, ?)
                             ON DUPLICATE KEY UPDATE
-                              user = ?,
+                              email = ?,
                               role = ?,
                               admin = ?`
-                    await server.app.mysql.query(sql, [user, "user", admin, user, "user", admin])
+                    await server.app.mysql.query(sql, [email, "user", admin, email, "user", admin])
                         .catch((error) => console.log(error))
 
                     return "promoted user."
@@ -150,14 +141,12 @@ exports.plugin = {
 
                     //Admin clarification
 
-                    const sqlfetchadmin = `SELECT * FROM new_schema.users WHERE user = ? AND role = 'admin'`;
+                    const sqlfetchadmin = `SELECT * FROM new_schema.users WHERE email = ? AND role = 'admin'`;
                     let adminuser = await server.app.mysql.query(sqlfetchadmin, [request.query.admin])
 
-                    if (adminuser.length != 1) return Boom.badRequest("Wrong admin userid")
+                    if (adminuser.length != 1) return Boom.badRequest("Wrong admin email")
 
                     adminuser = adminuser[0];
-
-                    if (adminuser.email == null) return Boom.badImplementation("This admin doesn't have email.")
 
                     //Email and Text Preparation
 
@@ -165,8 +154,8 @@ exports.plugin = {
                     const useremail = request.auth.credentials.email;
 
                     admintovalidatecredential = {
-                        user: request.auth.credentials.user,
-                        admin: adminuser.user
+                        user: request.auth.credentials.email,
+                        admin: adminuser.email
                     }
                     const token = genverifytoken(admintovalidatecredential)
 
@@ -177,7 +166,7 @@ exports.plugin = {
                     await iotcloudservetransport.sendMail({
                         from: 'noreply@iotcloudserve.net',
                         to: adminuser.email,
-                        subject: `${name} from ${useremail} ask you for permission to use iotcloudserve.net`,
+                        subject: `${name} from ${useremail} asking you for permission to use iotcloudserve.net`,
                         html: text,
                     }).catch((error) => {
                         console.log(error)

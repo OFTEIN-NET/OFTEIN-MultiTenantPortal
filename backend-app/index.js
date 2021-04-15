@@ -63,18 +63,17 @@ main = async () => {
 
     const validate = async function (decoded, request, h) {
 
-        const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
-        let res = await server.app.mysql.query(sql, [decoded.user])
+        const sql = `SELECT * FROM new_schema.users WHERE email = ?`;
+        let res = await server.app.mysql.query(sql, [decoded.email])
         if (res.length == 1) {
             return { isValid: res[0].role == 'admin' || res[0].role == 'user' }
-        } else if (res.length == 0 && decoded.user && decoded.email) {
-            const sql = `INSERT INTO new_schema.users (user, email)
+        } else if (res.length == 0 && decoded.email) {
+            const sql = `INSERT INTO new_schema.users (email)
                             VALUES
-                              (?, ?)
+                              (?)
                             ON DUPLICATE KEY UPDATE
-                              user = ?,
                               email = ?`
-            await server.app.mysql.query(sql, [decoded.user, decoded.email, decoded.user, decoded.email])
+            await server.app.mysql.query(sql, [decoded.email, decoded.email])
         }
         return { isValid: false }
 
@@ -82,17 +81,16 @@ main = async () => {
 
     const simpleValidate = async function (decoded, request, h) {
 
-        const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
-        let res = await server.app.mysql.query(sql, [decoded.user])
+        const sql = `SELECT * FROM new_schema.users WHERE email = ?`;
+        let res = await server.app.mysql.query(sql, [decoded.email])
 
         if (res.length == 0) {
-            const sql = `INSERT INTO new_schema.users (user, email)
+            const sql = `INSERT INTO new_schema.users (email)
                             VALUES
-                              (?, ?)
+                              (?)
                             ON DUPLICATE KEY UPDATE
-                              user = ?,
                               email = ?`
-            await server.app.mysql.query(sql, [decoded.user, decoded.email, decoded.user, decoded.email])
+            await server.app.mysql.query(sql, [decoded.email, decoded.email])
         }
 
         return { isValid: true }
@@ -101,8 +99,8 @@ main = async () => {
 
     const adminValidate = async function (decoded, request, h) {
 
-        const sql = `SELECT * FROM new_schema.users WHERE user = ?`;
-        let res = await server.app.mysql.query(sql, [decoded.user])
+        const sql = `SELECT * FROM new_schema.users WHERE email = ?`;
+        let res = await server.app.mysql.query(sql, [decoded.email])
         if (res.length == 1) {
             return { isValid: res[0].role == 'admin' }
         }
