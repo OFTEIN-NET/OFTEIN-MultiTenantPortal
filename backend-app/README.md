@@ -66,7 +66,7 @@ GET | `authed` | `host`/sendemail | `authed` asks for permission | - | - | `admi
 Method | Auth-Level | URL | Description | Payload | Params | Query | Remark | Example
 --- | --- | --- | --- | --- | --- | --- | --- | ---
 GET | `admin` | `host`/users | to list all users for maintenance | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
-GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `email`<br>`admin`<br>`token` | `admin` must be boolean in order to set to be admin or not (default is false) and email` must be user-email
+GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `email`<br>`admin`<br>`token` | `admin` must be boolean in order to set to be admin or not (default is false) and `email` must be user-email
 GET | `admin` | `host`/demoteaccount | demote specific account | - | - | `email`<br>`token` | `email` must be user-email
 
 * `admin` could add accounts directly via `/promoteaccount`
