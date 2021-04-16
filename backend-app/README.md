@@ -37,13 +37,13 @@ Method | Auth-Level | URL | Description | Payload | Params | Query | Example | R
 GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | | `cluster` is not required
 POST | `admin`<br>`user` | `host`/v3/pod | create a pod | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/pod | delete specific pod | - | - | `cluster`<br>`token`<br>`name` | 
-GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` |  | `cluster` is not required
+GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` |  | `cluster` is optional
 POST | `admin`<br>`user` | `host`/v3/deployment | create a deployment | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/deployment | delete specific deployment | - | - | `cluster`<br>`token`<br>`name` | 
-GET | `admin`<br>`user` | `host`/v3/service | view all services | - | - | `cluster`<br>`token` |  | `cluster` is not required
+GET | `admin`<br>`user` | `host`/v3/service | view all services | - | - | `cluster`<br>`token` |  | `cluster` is optional
 POST | `admin`<br>`user` | `host`/v3/service | create a service | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/service | delete specific service | - | - | `cluster`<br>`token`<br>`name` | 
-GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cluster`<br>`token` |  | `cluster` is not required
+GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cluster`<br>`token` |  | `cluster` is optional
 POST | `admin`<br>`user` | `host`/v3/ingress | create an ingress | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/ingress | delete specific ingress | - | - | `cluster`<br>`token`<br>`name` | 
 
@@ -56,9 +56,8 @@ GET | `authed`<br>`admin`<br>`user` | `host`/info | get user infomation | - | - 
 Method | Auth-Level | URL | Description | Payload | Params | Query | Remark | Example
 --- | --- | --- | --- | --- | --- | --- | --- | ---
 GET | `authed`<br>`admin`<br>`user` | `host`/admins | <ul><li>to list all admins</li><li>to let authed-user selecting admin</li></ul> | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
-GET | `authed` | `host`/sendemail | `authed` asks for permission | - | - | `admin`<br>`token` | 
+GET | `authed` | `host`/sendemail | `authed` asks for permission | - | - | `admin`<br>`token` | `admin` must be admin-email selected from `/admins`
 
-* `admin` must be admin-email selected from `/admins`
 * Verification link will be valid for 7 days.
 
 
