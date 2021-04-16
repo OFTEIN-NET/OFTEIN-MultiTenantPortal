@@ -34,7 +34,7 @@ There is only 1 way to demote user.
 
 Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
 --- | --- | --- | --- | --- | --- | --- | --- | ---
-GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | | `cluster` is not required
+GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | | `cluster` is optional
 POST | `admin`<br>`user` | `host`/v3/pod | create a pod | `yaml` | - | `cluster`<br>`token` |
 DELETE | `admin`<br>`user` | `host`/v3/pod | delete specific pod | - | - | `cluster`<br>`token`<br>`name` | 
 GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` |  | `cluster` is optional
