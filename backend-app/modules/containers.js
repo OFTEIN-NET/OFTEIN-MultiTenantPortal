@@ -10,7 +10,8 @@ exports.plugin = {
         const FS   = require('fs');
         const Boom = require('@hapi/boom');
         let Wreck = require('@hapi/wreck');
-        Wreck = Wreck.defaults({ timeout: 3000});
+        const timeout = 5000;
+        Wreck = Wreck.defaults({ timeout: timeout});
 
         const k8s = require('@kubernetes/client-node');
 
@@ -386,20 +387,56 @@ exports.plugin = {
                                 const cluster = data.cluster;
                                 switch (type) {
                                     case "pod":
-                                        data.status = await getpod(cluster, name)
-                                            .catch((error) => handlek8serror(error))
+                                        data.status = await new Promise((resolve) => {
+                                            setTimeout(function() {
+                                                resolve("Error: Timeout");
+                                            }, timeout);
+                                            getpod(cluster, name)
+                                                .catch((error) => {
+                                                    handlek8serror(error)
+                                                    return "Error: "+error.statusCode
+                                                })
+                                                .then((res) => resolve(res))
+                                        })
                                         break;
                                     case "deployment":
-                                        data.status = await getdeployment(cluster, name)
-                                            .catch((error) => handlek8serror(error))
+                                        data.status = await new Promise((resolve) => {
+                                            setTimeout(function() {
+                                                resolve("Error: Timeout");
+                                            }, timeout);
+                                            getdeployment(cluster, name)
+                                                .catch((error) => {
+                                                    handlek8serror(error)
+                                                    return "Error: "+error.statusCode
+                                                })
+                                                .then((res) => resolve(res))
+                                        })
                                         break;
                                     case "service":
-                                        data.status = await getservice(cluster, name)
-                                            .catch((error) => handlek8serror(error))
+                                        data.status = await new Promise((resolve) => {
+                                            setTimeout(function() {
+                                                resolve("Error: Timeout");
+                                            }, timeout);
+                                            getservice(cluster, name)
+                                                .catch((error) => {
+                                                    handlek8serror(error)
+                                                    return "Error: "+error.statusCode
+                                                })
+                                                .then((res) => resolve(res))
+                                        });
                                         break;
                                     case "ingress":
-                                        data.status = await getingress(cluster, name)
-                                            .catch((error) => handlek8serror(error))
+                                        data.status = await new Promise((resolve) => {
+                                            setTimeout(function() {
+                                                resolve("Error: Timeout");
+                                            }, timeout);
+                                            getingress(cluster, name)
+                                                .catch((error) => {
+                                                    handlek8serror(error)
+                                                    return "Error: "+error.statusCode
+                                                })
+                                                .then((res) => resolve(res))
+                                        });
                                         break;
                                 }
                             })
@@ -464,10 +501,18 @@ exports.plugin = {
                                 break;
                         }
 
-                        return await res.then(async (res) => {
-                            await upsertinfo(type, cluster, name, email, yamlfile);
-                            return res
-                        }).catch((error) => handlek8serror(error))
+                        return await new Promise((resolve, reject) => {
+                            setTimeout(function() {
+                                reject(Boom.clientTimeout(cluster));
+                            }, timeout);
+                            res
+                                .then(async (res) => {
+                                    await upsertinfo(type, cluster, name, email, yamlfile);
+                                    return res
+                                })
+                                .catch((error) => reject(handlek8serror(error)))
+                                .then((res) => resolve(res));
+                        }).catch((error) => error);
 
                     } catch (err) {
                         // console.log(err)
@@ -516,10 +561,18 @@ exports.plugin = {
                                 break;
                         }
 
-                        return await res.then(async (res) => {
-                            await deleteinfo(type, cluster, name, email);
-                            return res
-                        }).catch((error) => handlek8serror(error))
+                        return await new Promise((resolve, reject) => {
+                            setTimeout(function() {
+                                reject(Boom.clientTimeout(cluster));
+                            }, timeout);
+                            res
+                                .then(async (res) => {
+                                    await deleteinfo(type, cluster, name, email);
+                                    return res
+                                })
+                                .catch((error) => reject(handlek8serror(error)))
+                                .then((res) => resolve(res));
+                        }).catch((error) => error)
 
                     } catch (err) {
                         // console.log(err)
