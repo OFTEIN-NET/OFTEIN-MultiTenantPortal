@@ -287,7 +287,10 @@ exports.plugin = {
                     auth: 'simplejwt',
                 },
                 handler: async (request, h) => {
-                    return request.auth.credentials
+                    const sql = `SELECT * FROM new_schema.users WHERE email = ?`;
+                    const email = request.auth.credentials.email;
+                    const user = await server.app.mysql.query(sql, [email]);
+                    return user[0];
                 }
             },
             {

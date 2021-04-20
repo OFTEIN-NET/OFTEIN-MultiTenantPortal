@@ -61,6 +61,24 @@ main = async () => {
     server.app.secret = secret;
     server.app.accountvalidationsecret = accountvalidationsecret;
 
+    insertnewuser = (decoded) => {
+        if (decoded.name) {
+            const sql = `INSERT INTO new_schema.users (email, name)
+                            VALUES
+                              (?, ?)
+                            ON DUPLICATE KEY UPDATE
+                              email = ?, name = ?`;
+            return server.app.mysql.query(sql, [decoded.email, decoded.name, decoded.email, decoded.name])
+        } else {
+            const sql = `INSERT INTO new_schema.users (email)
+                            VALUES
+                              (?)
+                            ON DUPLICATE KEY UPDATE
+                              email = ?`;
+            return server.app.mysql.query(sql, [decoded.email, decoded.email])
+        }
+    }
+
     const validate = async function (decoded, request, h) {
 
         const sql = `SELECT * FROM new_schema.users WHERE email = ?`;
@@ -68,12 +86,7 @@ main = async () => {
         if (res.length == 1) {
             return { isValid: res[0].role == 'admin' || res[0].role == 'user' }
         } else if (res.length == 0 && decoded.email) {
-            const sql = `INSERT INTO new_schema.users (email)
-                            VALUES
-                              (?)
-                            ON DUPLICATE KEY UPDATE
-                              email = ?`
-            await server.app.mysql.query(sql, [decoded.email, decoded.email])
+            await insertnewuser(decoded);
         }
         return { isValid: false }
 
@@ -85,12 +98,7 @@ main = async () => {
         let res = await server.app.mysql.query(sql, [decoded.email])
 
         if (res.length == 0) {
-            const sql = `INSERT INTO new_schema.users (email)
-                            VALUES
-                              (?)
-                            ON DUPLICATE KEY UPDATE
-                              email = ?`
-            await server.app.mysql.query(sql, [decoded.email, decoded.email])
+            await insertnewuser(decoded);
         }
 
         return { isValid: true }
