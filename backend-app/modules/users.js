@@ -103,6 +103,7 @@ exports.plugin = {
 
                     //fetch account
                     const sqlfetchaccount = `SELECT * FROM new_schema.users WHERE email = ?`;
+
                     let accountuser = await server.app.mysql.query(sqlfetchaccount, [request.auth.credentials.email])
                     if (accountuser.length != 1) return Boom.badRequest("Wrong account email")
 
@@ -154,7 +155,7 @@ exports.plugin = {
                     const useremail = request.auth.credentials.email;
 
                     admintovalidatecredential = {
-                        user: request.auth.credentials.email,
+                        email: request.auth.credentials.email,
                         admin: adminuser.email
                     }
                     const token = genverifytoken(admintovalidatecredential)
