@@ -5,10 +5,72 @@
 The example deployment is running on the Google Cloud Platform and accessible 
 through this following information:
 
-`host`: https://ofteinplusapi.main.202.28.193.102.xip.io/ <br>
+`host`: https://api.iotcloudserve.net/ <br>
+`frontend`: https://oftein.iotcloudserve.net <br>
 `cluster`: `chula`, `gist`, `um`
 
-## OFTEIN-Plusplus V2
+There are 4 user types in our scenario.
+* `public`: A person who hasn't logged in yet.
+* `authed`: A person who has logged in, but has not yet been verified by admin.
+* `user`: A person who has logged in and been verified by admin.
+* `admin`
+
+There are 4 ways to create/promote new user.
+* `public` logins
+    * then `authed` sends verification-email to admin-email via `/sendemail` .
+    * then `admin` checks verification-email and clicks the verification-link inside.
+* `admin` lists all users via `/users`
+    * then `admin` intentionally promotes specific user to be `user` or `admin` via `/promoteaccount`.
+* `admin` promotes `user` to be `admin` via `/promoteaccount`.
+* `admin` adds `public` to be `user` or `admin` directly via `/promoteaccount`.
+
+There is only 1 way to demote user.
+* `admin` lists all users via `/users`
+    * then `admin` demotes `user` to be `authed`
+* `admin` cannot be demoted.
+
+
+## OFTEIN-Plusplus V3
+
+Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `admin`<br>`user` | `host`/v3/pod | view all pods | - | - | `cluster`<br>`token` | | `cluster` is optional
+POST | `admin`<br>`user` | `host`/v3/pod | create a pod | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/pod | delete specific pod | - | - | `cluster`<br>`token`<br>`name` | 
+GET | `admin`<br>`user` | `host`/v3/deployment | view all deployments | - | - | `cluster`<br>`token` |  | `cluster` is optional
+POST | `admin`<br>`user` | `host`/v3/deployment | create a deployment | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/deployment | delete specific deployment | - | - | `cluster`<br>`token`<br>`name` | 
+GET | `admin`<br>`user` | `host`/v3/service | view all services | - | - | `cluster`<br>`token` |  | `cluster` is optional
+POST | `admin`<br>`user` | `host`/v3/service | create a service | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/service | delete specific service | - | - | `cluster`<br>`token`<br>`name` | 
+GET | `admin`<br>`user` | `host`/v3/ingress | view all ingress(es) | - | - | `cluster`<br>`token` |  | `cluster` is optional
+POST | `admin`<br>`user` | `host`/v3/ingress | create an ingress | `yaml` | - | `cluster`<br>`token` |
+DELETE | `admin`<br>`user` | `host`/v3/ingress | delete specific ingress | - | - | `cluster`<br>`token`<br>`name` | 
+
+## To get user info
+Method | Auth-Level | URL | Description | Payload | Params | Query | Example | Remark
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `authed`<br>`admin`<br>`user` | `host`/info | get user infomation | - | - | `token` | - | - |
+
+## A new user asking for permission
+Method | Auth-Level | URL | Description | Payload | Params | Query | Remark | Example
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `authed`<br>`admin`<br>`user` | `host`/admins | <ul><li>to list all admins</li><li>to let authed-user selecting admin</li></ul> | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
+GET | `authed` | `host`/sendemail | `authed` asks for permission | - | - | `admin`<br>`token` | `admin` must be admin-email selected from `/admins`
+
+* Verification link will be valid for 7 days.
+
+
+## Admin listing all users and promoting by himself
+Method | Auth-Level | URL | Description | Payload | Params | Query | Remark | Example
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+GET | `admin` | `host`/users | to list all users for maintenance | - | - | `page`<br>`limit`<br>`token` | `page` and `limit` are not required
+GET | `admin` | `host`/promoteaccount | promote specific account | - | - | `email`<br>`admin`<br>`token` | `admin` must be boolean in order to set to be admin or not (default is false) and `email` must be user-email
+GET | `admin` | `host`/demoteaccount | demote specific account | - | - | `email`<br>`token` | `email` must be user-email
+
+* `admin` could add accounts directly via `/promoteaccount`
+
+## OFTEIN-Plusplus V2 (deprecated)
 
 Method | URL | Description | Payload | Params | Query | Example
 --- | --- | --- | --- | --- | --- | ---
@@ -20,7 +82,7 @@ POST | `host`/v2/deployments | create a deployment | `yaml` | - | `cluster`<br>`
 DELETE | `host`/v2/deployments | delete specific deployment | - | - | `cluster`<br>`userid`<br>`name` | [Postman](https://www.getpostman.com/collections/5772c6fec899640b516f)
 
 
-## OFTEIN-Plusplus V1
+## OFTEIN-Plusplus V1 (deprecated excludes /clusters)
 
 Method | URL | Description | Payload | Params | Example
 --- | --- | --- | --- | --- | ---
