@@ -34,12 +34,9 @@
                               method="get"
                               onsubmit="return validateAuthorizeForm()"
                               target="_blank">
-                                  <label for="admin">Select Administrator:</label>
-                                  <!-- <select id="admin" onchange="populate_admin_list(this)">
-                                    <option value="">-- Select admin --</option>
-                                  </select> -->
+                                 <label for="admin">Select Administrator:</label>
                                  <select id="admin" name="admin">
-                                    <option value="ahmad@smartx.kr">Muhammad Ahmad</option>
+                                    <option value="ahmad@smartx.kr">Muhammad Ahmad Rathore</option>
                                     <option value="kittipat.sae@gmail.com" selected>Kittipat Saengkaenpetch</option>
                                     <option value="usman@smartx.kr">Muhammad Usman</option>
                                 </select>
@@ -263,6 +260,7 @@
 
         //Populate admin select list
         function populate_admin_list(){
+            //var admins = [{"email":"kittipat.sae@gmail.com","name":"Kittipat Saengkaenpetch","role":"admin","admin":null,"created":"2021-04-10T10:09:27.000Z","updated":"2021-04-10T10:42:25.000Z"},{"email":"natt.visavarungroj@gmail.com","name":"Natt Visavarungroj","role":"admin","admin":null,"created":"2021-04-10T10:44:02.000Z","updated":"2021-04-10T10:44:02.000Z"},{"email":"usman@smartx.kr","name":"Muhammad Usman","role":"admin","admin":null,"created":"2021-04-10T10:42:25.000Z","updated":"2021-04-10T10:42:39.000Z"}]
             var admins = ""
             var ele = document.getElementById('admin');
             for (var i = 0; i < admins.length; i++) {
@@ -273,16 +271,18 @@
         }
 
         //Sendmail to authorize new user
-        function validateAuthorizeFormForm() {
+        function validateAuthorizeForm() {
             const post_url = document.getElementById("post_url_sendmail").innerText;
             const token = document.forms["authorizeForm"]["token"].value;
             const admin_user = document.forms["authorizeForm"]["admin"].value;
 
-            if (token == "" || token == null) {
-                alert("User token is missing.");
+            alert("Admin User: "+ admin_user);
+
+            if (admin_user == "" || admin_user == null) {
+                alert("Admin User is not selected.");
                 return false;
             } else {
-                alert("Authentication request sent to the admin_user. You will get notified when your request is accepted.");
+                alert("Authentication request sent to the selected admin. You will get notified when your request is accepted.");
             }
 
             //document.getElementById("authorizeForm").action = post_url + "?token=" + token + "&admin=" + admin_user;
