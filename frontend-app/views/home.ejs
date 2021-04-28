@@ -22,13 +22,31 @@
         <section class="jumbotron container mt-5">
             <div style="background-color:#e6f5ff;">
                 <div style="background-color:#000066;color:white;">
-                    <h2>Multi-Tenant Portal Authorization</h2>
+                    <h2>Multi-Tenant Portal Authorization Required</h2>
                 </div>
                 <div style="color:red;">
-                    <p class="mt-5">You are not authorized to use resources in OF@TEIN++
-                        Playground</p>
-                    <p class="mt-5" style="color:black;">Please contact administrator and provide following Info </p>
-                    <p class="mt-5" style="color:black;">Your ID: <%= user.id %> and Organization Info </p>
+                    <p class="mt-5">You are not authorized to use OF@TEIN++ Playground resources yet.</p>
+                    <p class="mt-5" style="color:black;">Please select one of the administrator from the list to submit your info for getting authorized. Your Name: <%= user.displayName %> and Email: <%= user.emails[0].value %> will be verified.</p>
+                    <div id="new-authorize-div" class="w3-container">
+                        <hr style="height:3px;color:gray;background-color:#ff1a75">
+                        <form id="authorizeForm" name="authorizeForm"
+                              action="<%= post_url_sendmail %>"
+                              method="get"
+                              onsubmit="return validateAuthorizeForm()"
+                              target="_blank">
+                                 <label for="admin">Select Administrator:</label>
+                                 <select id="admin" name="admin">
+                                    <option value="ahmad@smartx.kr">Muhammad Ahmad Rathore</option>
+                                    <option value="kittipat.sae@gmail.com" selected>Kittipat Saengkaenpetch</option>
+                                    <option value="usman@smartx.kr">Muhammad Usman</option>
+                                </select>
+                              <input id="token" name="token" type="hidden" value="<%= token %>">
+                            <br><br>
+                            <input class="w3-button w3-dark-grey" type="submit" value="Submit">
+                        </form>
+
+                        <p id="post_url_sendmail" style="display:none"><%= post_url_sendmail %></p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -43,6 +61,7 @@
                 <div class="w3-col s8 w3-bar">
                     <p>Welcome</p>
                     <p><strong><%= user.displayName %></strong></p>
+                    <p><strong><%= user.emails[0].value %></strong></p>
                 </div>
             </div>
             <hr>
@@ -136,6 +155,18 @@
                                 </tr>
                             <% }); %>
                         <% } %>
+                        <% if (USER_Service_List[0] && USER_Service_List[0].cluster) { %>
+                            <% USER_Service_List.forEach(function(USER_Service_List) { %>
+                                <tr>
+                                    <td><%= USER_Service_List.name %></td>
+                                    <td><%= USER_Service_List.created %> </td>
+                                    <td><%= USER_Service_List.cluster %></td>
+                                    <td><%= USER_Service_List.status.kind %> </td>
+                                    <td><%= USER_Service_List.status.namespace %> </td>
+                                    <td><input class="w3-button w3-red w3-text-white fa fa-trash" type="button" value="Delete" onclick="deleteRow(this)"></td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
                     </table>
                 </div>
 
@@ -175,7 +206,7 @@
                                 </td>
                             </tr>
                         </table>
-                        <input id="userid" name="userid" type="hidden" value="<%= user.id %>">
+                        <input id="token" name="token" type="hidden" value="<%= token %>">
                         <br><br><br>
                     </form>
 
@@ -212,25 +243,51 @@
         //Create new workload
         function validateForm() {
             const post_url = document.getElementById("post_url").innerText;
-            const user_id = document.forms["deployForm"]["userid"].value;
+            const token = document.forms["deployForm"]["token"].value;
             const cluster_id = document.forms["deployForm"]["cluster"].value;
             const workload_type = document.forms["deployForm"]["workload_type"].value;
 
-            if (user_id == "" || user_id == null) {
-                alert("User ID must be specified.");
+            if (token == "" || token == null) {
+                alert("User token is missing.");
                 return false;
             } else {
-                alert("New workload request sent to the server for User ID " + user_id);
+                alert("New workload request sent to the server for User");
             }
 
-            document.getElementById("deployForm").action = post_url + "/" + workload_type.trim() + "s?cluster=" + cluster_id + "&userid=" + user_id;
+            document.getElementById("deployForm").action = post_url + "/" + workload_type.trim() + "?cluster=" + cluster_id + "&token=" + token;
             //window.location.href = post_url + "?cluster=" + cluster_id + "&userid=" + user_id;
+        }
+
+        //Populate admin select list
+        function populate_admin_list(){
+            //var admins = [{"email":"kittipat.sae@gmail.com","name":"Kittipat Saengkaenpetch","role":"admin","admin":null,"created":"2021-04-10T10:09:27.000Z","updated":"2021-04-10T10:42:25.000Z"},{"email":"natt.visavarungroj@gmail.com","name":"Natt Visavarungroj","role":"admin","admin":null,"created":"2021-04-10T10:44:02.000Z","updated":"2021-04-10T10:44:02.000Z"},{"email":"usman@smartx.kr","name":"Muhammad Usman","role":"admin","admin":null,"created":"2021-04-10T10:42:25.000Z","updated":"2021-04-10T10:42:39.000Z"}]
+            var admins = ""
+            var ele = document.getElementById('admin');
+            for (var i = 0; i < admins.length; i++) {
+                // POPULATE SELECT ELEMENT WITH JSON.
+                ele.innerHTML = ele.innerHTML +
+                    '<option value="' + admins[i]['email'] + '">' + admins[i]['name'] + '</option>';
+            }
+        }
+
+        //Sendmail to authorize new user
+        function validateAuthorizeForm() {
+            const post_url = document.getElementById("post_url_sendmail").innerText;
+            const token = document.forms["authorizeForm"]["token"].value;
+            const admin_user = document.forms["authorizeForm"]["admin"].value;
+
+            if (admin_user == "" || admin_user == null) {
+                alert("Admin User is not selected.");
+                return false;
+            } else {
+                alert("Authentication request sent to the selected admin. You will get notified when your request is accepted.");
+            }
         }
 
         //Delete existing workload
         function deleteRow(r) {
             //var i = r.parentNode.parentNode.rowIndex;
-            const user_id = document.forms["deployForm"]["userid"].value;
+            const token = document.forms["deployForm"]["token"].value;
             const post_url = document.getElementById("post_url").innerText;
 
             const row = r.parentNode.parentNode;
@@ -238,7 +295,7 @@
             const cluster = row.querySelector('td:nth-child(3)').innerHTML;
             const workload_type = row.querySelector('td:nth-child(4)').innerHTML.toLowerCase();
 
-            const delete_url = post_url + "/" + workload_type.trim() + "s?cluster=" + cluster + "&userid=" + user_id + "&name=" + workload;
+            const delete_url = post_url + "/" + workload_type.trim() + "?cluster=" + cluster + "&token=" + token + "&name=" + workload;
 
             // Call Backend API
             fetch(delete_url, {method: 'DELETE'})
@@ -248,21 +305,6 @@
             // Remove from the HTML table
             document.getElementById("workloadsTable").deleteRow(row.rowIndex);
         }
-
-        /*function validateForm() {
-            var yaml = document.forms["deplyForm"]["yaml"].value;
-            if (yaml == "" || yaml == null) {
-                alert("Yaml file must be selected.");
-                return false;
-            }
-            alert("Yaml file must be selected." + document.getElementById('userid').value);
-        }*/
-
-        /*let form = document.getElementById("deployForm");
-        form.addEventListener("submit", (e) => {
-          e.preventDefault();
-          alert("Deployment request submitted successfully!");
-        });*/
 
     </script>
 
