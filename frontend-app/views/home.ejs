@@ -276,16 +276,12 @@
             const token = document.forms["authorizeForm"]["token"].value;
             const admin_user = document.forms["authorizeForm"]["admin"].value;
 
-            alert("Admin User: "+ admin_user);
-
             if (admin_user == "" || admin_user == null) {
                 alert("Admin User is not selected.");
                 return false;
             } else {
                 alert("Authentication request sent to the selected admin. You will get notified when your request is accepted.");
             }
-
-            //document.getElementById("authorizeForm").action = post_url + "?token=" + token + "&admin=" + admin_user;
         }
 
         //Delete existing workload
@@ -309,21 +305,6 @@
             // Remove from the HTML table
             document.getElementById("workloadsTable").deleteRow(row.rowIndex);
         }
-
-        /*function validateForm() {
-            var yaml = document.forms["deplyForm"]["yaml"].value;
-            if (yaml == "" || yaml == null) {
-                alert("Yaml file must be selected.");
-                return false;
-            }
-            alert("Yaml file must be selected." + document.getElementById('userid').value);
-        }*/
-
-        /*let form = document.getElementById("deployForm");
-        form.addEventListener("submit", (e) => {
-          e.preventDefault();
-          alert("Deployment request submitted successfully!");
-        });*/
 
     </script>
 
