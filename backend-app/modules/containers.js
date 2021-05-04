@@ -78,6 +78,7 @@ exports.plugin = {
 
             await listnode(cluster)
                 .then((response) => {
+
                     response.response.body.items.map((node) => {
                         resource.node++;
                         resource.capacity.cpu+= parseInt(node.status.capacity.cpu);
@@ -137,7 +138,7 @@ exports.plugin = {
 
         // error handling
         const handlek8serror = (error) => {
-            console.log(error);
+            // console.log(error);
             if (error.response) return new Boom.Boom(error.response.body.message, {
                 statusCode: error.response.statusCode
             })
@@ -265,20 +266,157 @@ exports.plugin = {
             return server.app.mysql.query(sql, [email])
         }
 
+        const getresourcestatus = async () => {
+            const resourceallclusterstatus = await Promise.all(Object.keys(clusters).map(async (cluster) => {
+                return new Promise((resolve) => {
+                    setTimeout(function() {
+                        resolve({
+                            limit: null, // unknown
+                            cluster: cluster,
+                            timeout: true
+                        });
+                    }, timeout);
+                    currentresourcecluster(cluster)
+                        .then((res) => {
+                            if (res.response.body.items.length > 0) {
+                                res.response.body.items[0].status["limit"] = true;
+                                res.response.body.items[0].status["cluster"] = cluster;
+                                res.response.body.items[0].status["timeout"] = false;
+                                if (res.response.body.items[0].status["hard"]) {
+                                    const cpulimit = parseFloat(res.response.body.items[0].status["hard"]["limits.cpu"])
+                                    res.response.body.items[0].status["hard"]["limits.cpu"] = cpulimit;
+                                    const memlimit = parseFloat(res.response.body.items[0].status["hard"]["limits.memory"])
+                                    res.response.body.items[0].status["hard"]["limits.memory"] = memlimit;
+                                }
+                                if (res.response.body.items[0].status["used"]) {
+                                    const cpulimit = parseFloat(res.response.body.items[0].status["used"]["limits.cpu"])
+                                    res.response.body.items[0].status["used"]["limits.cpu"] = cpulimit;
+                                    const memlimit = parseFloat(res.response.body.items[0].status["used"]["limits.memory"])
+                                    res.response.body.items[0].status["used"]["limits.memory"] = memlimit;
+                                }
+                                resolve(res.response.body.items[0].status)
+                            } else {
+                                resolve({
+                                    limit: false,
+                                    cluster: cluster,
+                                    timeout: false
+                                }) // Unlimited
+                            }
+                        })
+                        .catch(() => resolve({
+                            limit: null, // unknown
+                            cluster: cluster,
+                            timeout: true
+                        }))
+                });
+            }));
+
+            return resourceallclusterstatus;
+        }
+
+        const extractcpumemfromyaml = (yamlfile) => {
+            let cpu = 0;
+            let mem = 0;
+
+            let containers = [];
+
+            // Pod definition
+            if ("spec" in yamlfile && "containers" in yamlfile.spec) yamlfile.spec.containers.map((container) => containers.push(container));
+
+            // Deployment definition
+            if ("spec" in yamlfile &&
+                "template" in yamlfile.spec &&
+                "spec" in yamlfile.spec.template &&
+                "containers" in yamlfile.spec.template.spec
+            ) yamlfile.spec.template.spec.containers.map((container) => containers.push(container));
+
+            containers.map((container) => {
+                if ("resources" in container) {
+                    if ("limits" in container.resources) {
+                        cpu += parseFloat(container.resources.limits.cpu);
+                        mem += parseFloat(container.resources.limits.memory);
+                    } else if ("requests" in container.resources) {
+                        cpu += parseFloat(container.resources.requests.cpu);
+                        mem += parseFloat(container.resources.requests.memory);
+                    }
+                }
+            });
+
+            return {cpu, mem}
+        };
+
+        const shuffleArray = (array) => {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        const getfeasiblecluster = async (spec) => {
+
+            let cpu = spec.cpu;
+            let mem = spec.mem;
+
+            const currentstatus = await getresourcestatus();
+            shuffleArray(currentstatus);
+
+            let feasiblecluster = [];
+
+            for(const cluster of currentstatus) {
+                if(!cluster.timeout) {
+
+                    cluster.score = 0;
+
+                    if (cluster.limit) {
+                        const maxcpu = cluster.hard["limits.cpu"];
+                        const maxmem = cluster.hard["limits.memory"];
+                        const usedcpu = cluster.used["limits.cpu"];
+                        const usedmem = cluster.used["limits.memory"];
+
+                        if (maxcpu - usedcpu >= cpu) cluster.score += 10;
+                        if (maxmem - usedmem >= mem) cluster.score += 10;
+
+                    } else {
+                        cluster.score += 20;
+                    }
+
+                    feasiblecluster.push(cluster);
+                }
+            }
+
+            feasiblecluster.sort((a, b) => b.score - a.score)
+
+            return feasiblecluster;
+        }
+
         server.route([
             {
-                path: "/getresource/{cluster}",
+                path: "/getfeasiblecluster",
                 options: {
+                    auth: false,
                     validate: {
-                        params: Joi.object({
-                            cluster: Joi.string().valid(...Object.keys(clusters))
+                        query: Joi.object({
+                            cpu: Joi.number().min(0).required(),
+                            mem: Joi.number().min(0).required()
                         })
                     }
                 },
                 method: "GET",
                 handler: async (request, h) => {
-                    return getresource(request.params.cluster)
+                    const spec = {
+                        cpu: request.query.cpu,
+                        mem: request.query.mem
+                    }
+                    return getfeasiblecluster(spec);
                 }
+            },
+            {
+                path: "/getresource",
+                options: {
+                    auth: false
+                },
+                method: "GET",
+                handler: (request, h) => getresourcestatus()
             },
             {
                 path: "/info",
@@ -467,7 +605,7 @@ exports.plugin = {
                         }),
                         query: Joi.object({
                             token: Joi.string().required(),
-                            cluster: Joi.string().valid(...Object.keys(clusters)).required()
+                            cluster: Joi.string().valid(...Object.keys(clusters))
                         })
                     },
                     payload: {
@@ -481,11 +619,21 @@ exports.plugin = {
 
                         const type = request.params.type;
                         const email = request.auth.credentials.email;
-                        const cluster = request.query.cluster;
+
                         const yaml = request.payload.yaml;
 
                         const yamlfile = Yaml.safeLoad(FS.readFileSync(yaml.path, 'utf8'));
                         const name = yamlfile.metadata.name;
+
+                        let cluster = request.query.cluster;
+
+                        if (request.query.cluster) {
+                            cluster = request.query.cluster;
+                        } else {
+                            const feasiblecluster = await getfeasiblecluster(extractcpumemfromyaml(yamlfile));
+                            if (feasiblecluster.length == 0) return Boom.badRequest("No possible cluster, all clusters might be down.")
+                            cluster = feasiblecluster[0].cluster;
+                        };
 
                         let res;
 
