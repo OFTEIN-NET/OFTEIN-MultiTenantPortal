@@ -81,10 +81,10 @@ exports.plugin = {
 
                     response.response.body.items.map((node) => {
                         resource.node++;
-                        resource.capacity.cpu+= parseInt(node.status.capacity.cpu);
-                        resource.capacity.memory+= parseFloat(node.status.capacity.memory)/1024/1024;
-                        resource.allocatable.cpu+= parseInt(node.status.allocatable.cpu);
-                        resource.allocatable.memory+= parseFloat(node.status.allocatable.memory)/1024/1024;
+                        resource.capacity.cpu+= parseValue(node.status.capacity.cpu);
+                        resource.capacity.memory+= parseValue(node.status.capacity.memory);
+                        resource.allocatable.cpu+= parseValue(node.status.allocatable.cpu);
+                        resource.allocatable.memory+= parseValue(node.status.allocatable.memory);
                     })
                     // resource = response
                 }).catch((error) => {
@@ -266,6 +266,16 @@ exports.plugin = {
             return server.app.mysql.query(sql, [email])
         }
 
+        const parseValue = (val) => {
+            if (val.indexOf("Gi") != -1) return parseFloat(val)*1024*1024;
+            else if (val.indexOf("G") != -1) return parseFloat(val)*1000*1000;
+            else if (val.indexOf("Mi") != -1) return parseFloat(val)*1024;
+            else if (val.indexOf("M") != -1) return parseFloat(val)*1000;
+            else if (val.indexOf("mi") != -1) return parseFloat(val)/1024;
+            else if (val.indexOf("m") != -1) return parseFloat(val)/1000;
+            else return parseFloat(val);
+        }
+
         const getresourcestatus = async () => {
             const resourceallclusterstatus = await Promise.all(Object.keys(clusters).map(async (cluster) => {
                 return new Promise((resolve) => {
@@ -283,15 +293,15 @@ exports.plugin = {
                                 res.response.body.items[0].status["cluster"] = cluster;
                                 res.response.body.items[0].status["timeout"] = false;
                                 if (res.response.body.items[0].status["hard"]) {
-                                    const cpulimit = parseFloat(res.response.body.items[0].status["hard"]["limits.cpu"])
+                                    const cpulimit = parseValue(res.response.body.items[0].status["hard"]["limits.cpu"])
                                     res.response.body.items[0].status["hard"]["limits.cpu"] = cpulimit;
-                                    const memlimit = parseFloat(res.response.body.items[0].status["hard"]["limits.memory"])
+                                    const memlimit = parseValue(res.response.body.items[0].status["hard"]["limits.memory"])
                                     res.response.body.items[0].status["hard"]["limits.memory"] = memlimit;
                                 }
                                 if (res.response.body.items[0].status["used"]) {
-                                    const cpulimit = parseFloat(res.response.body.items[0].status["used"]["limits.cpu"])
+                                    const cpulimit = parseValue(res.response.body.items[0].status["used"]["limits.cpu"])
                                     res.response.body.items[0].status["used"]["limits.cpu"] = cpulimit;
-                                    const memlimit = parseFloat(res.response.body.items[0].status["used"]["limits.memory"])
+                                    const memlimit = parseValue(res.response.body.items[0].status["used"]["limits.memory"])
                                     res.response.body.items[0].status["used"]["limits.memory"] = memlimit;
                                 }
                                 resolve(res.response.body.items[0].status)
@@ -333,11 +343,11 @@ exports.plugin = {
             containers.map((container) => {
                 if ("resources" in container) {
                     if ("limits" in container.resources) {
-                        cpu += parseFloat(container.resources.limits.cpu);
-                        mem += parseFloat(container.resources.limits.memory);
+                        cpu += parseValue(container.resources.limits.cpu);
+                        mem += parseValue(container.resources.limits.memory);
                     } else if ("requests" in container.resources) {
-                        cpu += parseFloat(container.resources.requests.cpu);
-                        mem += parseFloat(container.resources.requests.memory);
+                        cpu += parseValue(container.resources.requests.cpu);
+                        mem += parseValue(container.resources.requests.memory);
                     }
                 }
             });
@@ -352,7 +362,7 @@ exports.plugin = {
             }
         }
 
-        const getfeasiblecluster = async (spec) => {
+        const getfeasiblecluster = async (spec, leftmost = false) => {
 
             let cpu = spec.cpu;
             let mem = spec.mem;
@@ -373,18 +383,33 @@ exports.plugin = {
                         const usedcpu = cluster.used["limits.cpu"];
                         const usedmem = cluster.used["limits.memory"];
 
+                        // Able to create
                         if (maxcpu - usedcpu >= cpu) cluster.score += 10;
                         if (maxmem - usedmem >= mem) cluster.score += 10;
 
+                        if (leftmost &&
+                            ((maxcpu - usedcpu >= cpu) && (maxmem - usedmem >= mem))
+                        ) {
+                            cluster.score += (maxcpu - usedcpu);
+                            cluster.score += (maxmem - usedmem)/(1024*1024);
+                        }
+
                     } else {
+
+                        // No limit
                         cluster.score += 20;
+
+                        if (leftmost) {
+                            cluster.score += (maxcpu - usedcpu);
+                            cluster.score += (maxmem - usedmem)/(1024*1024);
+                        }
                     }
 
                     feasiblecluster.push(cluster);
                 }
             }
 
-            feasiblecluster.sort((a, b) => b.score - a.score)
+            feasiblecluster.sort((a, b) => b.score - a.score);
 
             return feasiblecluster;
         }
@@ -397,7 +422,8 @@ exports.plugin = {
                     validate: {
                         query: Joi.object({
                             cpu: Joi.number().min(0).required(),
-                            mem: Joi.number().min(0).required()
+                            mem: Joi.number().min(0).required(),
+                            leftmost: Joi.boolean().default(false)
                         })
                     }
                 },
@@ -407,7 +433,7 @@ exports.plugin = {
                         cpu: request.query.cpu,
                         mem: request.query.mem
                     }
-                    return getfeasiblecluster(spec);
+                    return getfeasiblecluster(spec, request.query.leftmost);
                 }
             },
             {
@@ -605,7 +631,8 @@ exports.plugin = {
                         }),
                         query: Joi.object({
                             token: Joi.string().required(),
-                            cluster: Joi.string().valid(...Object.keys(clusters))
+                            cluster: Joi.string().valid(...Object.keys(clusters)),
+                            leftmost: Joi.boolean().default(false)
                         })
                     },
                     payload: {
@@ -630,7 +657,7 @@ exports.plugin = {
                         if (request.query.cluster) {
                             cluster = request.query.cluster;
                         } else {
-                            const feasiblecluster = await getfeasiblecluster(extractcpumemfromyaml(yamlfile));
+                            const feasiblecluster = await getfeasiblecluster(extractcpumemfromyaml(yamlfile), request.query.leftmost);
                             if (feasiblecluster.length == 0) return Boom.badRequest("No possible cluster, all clusters might be down.")
                             cluster = feasiblecluster[0].cluster;
                         };
