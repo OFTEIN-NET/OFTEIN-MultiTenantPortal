@@ -2,42 +2,79 @@
 
 <% if (!user) { %>
     <section class="jumbotron container mt-5">
-        <h1>Multi-Tenant Portal Frontend Login</h1>
-        <p class="mt-5"><a href="/login/facebook" class="loginBtn loginBtn--facebook">Login with Facebook</a></p>
-        <p class="mt-5"><a href="/login/google" class="loginBtn loginBtn--google">Login with Google</a></p>
-        <p class="mt-5"><a href="/login/linkedin" class="loginBtn loginBtn--linkedin">Login with Linkedin</a></p>
+        <div style="background-color:#e6f5ff;">
+            <div style="background-color:#000066;color:white;">
+                <h2>Multi-Tenant Portal Login</h2>
+            </div>
+            <div>
+                <p class="mt-5"><a href="/login/facebook" class="loginBtn loginBtn--facebook">Login with Facebook</a>
+                </p>
+                <p class="mt-5"><a href="/login/google" class="loginBtn loginBtn--google">Login with Google</a></p>
+                <p class="mt-5"><a href="/login/linkedin" class="loginBtn loginBtn--linkedin">Login with Linkedin</a>
+                </p>
+                <br><br>
+                <p><b>Please, Login Using One of the Authentication Provider.</b></p>
+            </div>
+        </div>
     </section>
 <% } else { %>
     <% if (!is_authorized) { %>
         <section class="jumbotron container mt-5">
-            <h1>Multi-Tenant Portal Frontend</h1>
-            <p class="mt-5">You are not authorized to use resources in OF@TEIN++ Playground</p>
-            <p class="mt-5">Please contact administrator and provide following Info </p>
-            <p class="mt-5">Your ID: <%= user.id %> and Organization Info </p>
+            <div style="background-color:#e6f5ff;">
+                <div style="background-color:#000066;color:white;">
+                    <h2>Multi-Tenant Portal Authorization Required</h2>
+                </div>
+                <div style="color:red;">
+                    <p class="mt-5">You are not authorized to use OF@TEIN++ Playground resources yet.</p>
+                    <p class="mt-5" style="color:black;">Please select one of the administrator from the list to submit your info for getting authorized. Your Name: <%= user.displayName %> and Email: <%= user.emails[0].value %> will be verified.</p>
+                    <div id="new-authorize-div" class="w3-container">
+                        <hr style="height:3px;color:gray;background-color:#ff1a75">
+                        <form id="authorizeForm" name="authorizeForm"
+                              action="<%= post_url_sendmail %>"
+                              method="get"
+                              onsubmit="return validateAuthorizeForm()"
+                              target="_blank">
+                                 <label for="admin">Select Administrator:</label>
+                                 <select id="admin" name="admin">
+                                    <option value="ahmad@smartx.kr">Muhammad Ahmad Rathore</option>
+                                    <option value="kittipat.sae@gmail.com" selected>Kittipat Saengkaenpetch</option>
+                                    <option value="usman@smartx.kr">Muhammad Usman</option>
+                                </select>
+                              <input id="token" name="token" type="hidden" value="<%= token %>">
+                            <br><br>
+                            <input class="w3-button w3-dark-grey" type="submit" value="Submit">
+                        </form>
+
+                        <p id="post_url_sendmail" style="display:none"><%= post_url_sendmail %></p>
+                    </div>
+                </div>
+            </div>
         </section>
     <% } else { %>
         <!-- Sidebar/menu -->
-        <nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:300px;" id="mySidebar"><br>
+        <nav class="w3-sidebar w3-collapse w3-animate-left w3-light-grey"
+             style="z-index:3;width:300px;" id="mySidebar"><br>
             <div class="w3-container w3-row">
                 <div class="w3-col s4">
                     <img src="public/images/avatar.png" class="w3-circle w3-margin-right" style="width:46px">
                 </div>
                 <div class="w3-col s8 w3-bar">
-                    <span>Welcome, <strong><%= user.displayName %> ID: <%= user.id %> </strong></span><br>
+                    <p>Welcome</p>
+                    <p><strong><%= user.displayName %></strong></p>
+                    <p><strong><%= user.emails[0].value %></strong></p>
                 </div>
             </div>
             <hr>
-            <div class="w3-container">
-                <h5>Dashboard</h5>
+            <div class="w3-container w3-block w3-blue-grey" >
+                <h5 class="fa fa-home w3-xlarge"> Dashboard</h5>
             </div>
             <div class="w3-bar-block">
-                <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black"
-                   onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>  Close Menu</a>
-                <a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="fa fa-users fa-fw"></i> 
-                    Deploy</a>
-                <a href="#" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw"></i>  List</a>
-                <a href="/logout" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw"></i> 
-                    Logout</a>
+                <a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-green w3-hover-red"
+                   onclick="w3_close()" title="close menu"><i class="fa fa-remove fa-fw"></i>Close Menu</a>
+                <a href="#cluster-div" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw" style="font-size:24px;color:green"></i>Cluster(s) status</a>
+                <a href="#existing-workload-div" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw" style="font-size:24px;color:cadetblue"></i>List Workloads</a>
+                <a href="#new-workload-div" class="w3-bar-item w3-button w3-padding"><i class="fa fa-eye fa-fw" style="font-size:24px;color:#3B55A0"></i>New Workload</a>
+                <a href="/logout" class="w3-bar-item w3-button w3-padding"><i class="fa fa-history fa-fw" style="font-size:24px;color:red"></i>Logout</a>
             </div>
         </nav>
         <!-- Overlay effect when opening sidebar on small screens -->
@@ -45,102 +82,137 @@
              title="close side menu" id="myOverlay"></div>
 
         <!-- !PAGE CONTENT! -->
-<div class="w3-main" style="margin-left:300px;margin-top:43px;">
+        <div class="w3-main w3-white" style="margin-left:305px;margin-top:3px;">
+            <!-- Header -->
+            <header class="w3-container w3-light-grey w3-text-black" style="margin-left:4px;padding-top:4px;">
+                <h4><b><%= user.displayName %> Dashboard</b></h4>
+                <p class="w3-section w3-round w3-panel w3-large">Multi-tenant Portal is part of OF@TEIN++ Project (Open Federated Playgrounds for AI-inspired SmartX Services).</p>
+            </header>
 
-    <!-- Header -->
-    <header class="w3-container" style="padding-top:22px">
-        <h5><b><i class="fa fa-dashboard"></i> <%= user.displayName %> Dashboard</b></h5>
-    </header>
+            <hr style="height:3px;color:gray;background-color:#ff1a75">
 
-    <div class="w3-row-padding w3-margin-bottom">
-        <div class="w3-container">
-            <h4 style="color: blue">Kubernetes Cluster(s)</h4>
-            <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-                <tr>
-                    <th>Cluster</th>
-                    <th>Cluster Status</th>
-                </tr>
-                <% Cluster_List.forEach(function(Cluster_List) { %>
-                    <tr>
-                        <td><%= Cluster_List.cluster %></td>
-                        <td
-                        <% if (Cluster_List.running === true) { %>
-                            style="background-color:green;color:white;">
-                            Up
-                        </td>
-                        <% } else{ %>
-                            style="background-color:red;color:white;">
-                            Down
+            <div class="w3-row-padding w3-margin-bottom">
+                <div id="cluster-div" class="w3-container w3-center">
+                    <p class="w3-section w3-round w3-panel w3-xlarge w3-text-white" style="background-color:#3399ff;">Kubernetes Cluster(s)</p>
+                    <table class="w3-table w3-centered w3-border" style="width:100%; border: 1px solid lightgray;">
+                        <tr style="background-color:white;color:#3399ff;">
+                            <th colspan="3">Kubernetes Cluster(s) Running Status</th>
+                        </tr>
+                        <tr class="glow" style="text-align: center; border: 2px solid lightgray;">
+                            <% Cluster_List.forEach(function(Cluster_List) { %>
+                                <td class="w3-center"
+                                    <% if (Cluster_List.running === true) { %>
+                                        style="width:250px; border: 2px solid lightgray; background-color:green; color:white;">
+                                    <% } else{ %>
+                                        style="width:250px; border: 2px solid lightgray; background-color:red; color:white;">
+                                    <% } %>
+                                    <% if (Cluster_List.cluster === "chula") { %>
+                                        CHULA-Thailand
+                                    <% } else if (Cluster_List.cluster === "gist") { %>
+                                        GIST-Korea
+                                    <% } else { %>
+                                        UM-Malaysia
+                                    <% } %>
+                                </td>
+                            <% }); %>
+                        </tr>
+                    </table>
+                </div>
+
+                <div id="existing-workload-div" class="w3-container w3-center">
+                    <hr style="height:3px;color:gray;background-color:#ff1a75">
+                    <p class="w3-section w3-round w3-panel w3-xlarge w3-text-white" style="background-color:#3399ff;color:white;">Deployed Workloads (Pods, Deployments, Services)</p>
+                    <table id="workloadsTable" class="w3-table w3-striped w3-bordered w3-border w3-white">
+                        <tr style="background-color:white;color:#3399ff;">
+                            <th>Name</th>
+                            <th>Creation Time</th>
+                            <th>Cluster</th>
+                            <th>Workload Type</th>
+                            <th>Namespace</th>
+                            <th>Delete</th>
+                        </tr>
+                        <% if (USER_Pod_List[0] && USER_Pod_List[0].cluster) { %>
+                            <% USER_Pod_List.forEach(function(USER_Pod_List) { %>
+                                <tr>
+                                    <td><%= USER_Pod_List.name %></td>
+                                    <td><%= USER_Pod_List.created %> </td>
+                                    <td><%= USER_Pod_List.cluster %></td>
+                                    <td><%= USER_Pod_List.status.kind %> </td>
+                                    <td><%= USER_Pod_List.status.namespace %> </td>
+                                    <td><input class="w3-button w3-red w3-text-white fa fa-trash" type="button" value="Delete" onclick="deleteRow(this)"></td>
+                                </tr>
+                            <% }); %>
                         <% } %>
-                        </td>
-                    </tr>
-                <% }); %>
-            </table>
-            <br><br><br>
+                        <% if (USER_Deployment_List[0] && USER_Deployment_List[0].cluster) { %>
+                            <% USER_Deployment_List.forEach(function(USER_Deployment_List) { %>
+                                <tr>
+                                    <td><%= USER_Deployment_List.name %></td>
+                                    <td><%= USER_Deployment_List.created %> </td>
+                                    <td><%= USER_Deployment_List.cluster %></td>
+                                    <td><%= USER_Deployment_List.status.kind %> </td>
+                                    <td><%= USER_Deployment_List.status.namespace %> </td>
+                                    <td><input class="w3-button w3-red w3-text-white fa fa-trash" type="button" value="Delete" onclick="deleteRow(this)"></td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
+                        <% if (USER_Service_List[0] && USER_Service_List[0].cluster) { %>
+                            <% USER_Service_List.forEach(function(USER_Service_List) { %>
+                                <tr>
+                                    <td><%= USER_Service_List.name %></td>
+                                    <td><%= USER_Service_List.created %> </td>
+                                    <td><%= USER_Service_List.cluster %></td>
+                                    <td><%= USER_Service_List.status.kind %> </td>
+                                    <td><%= USER_Service_List.status.namespace %> </td>
+                                    <td><input class="w3-button w3-red w3-text-white fa fa-trash" type="button" value="Delete" onclick="deleteRow(this)"></td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
+                    </table>
+                </div>
 
-            <h4 style="color: blue">Running Deployments (Pods, Deployments, Services)</h4>
-            <table class="w3-table w3-striped w3-bordered w3-border w3-hoverable w3-white">
-                <tr>
-                    <th>Cluster</th>
-                    <th>Kind</th>
-                    <th>Namespace</th>
-                    <th>Name</th>
-                </tr>
-                <% if (GIST_Pod_List[0] && GIST_Pod_List[0].kind) {%>
-                    <% GIST_Pod_List.forEach(function(GIST_Pod_List) { %>
-                        <tr>
-                            <td>gist</td>
-                            <td><%= GIST_Pod_List.kind %></td>
-                            <td><%= GIST_Pod_List.name %></td>
-                            <td><%= GIST_Pod_List.namespace %> </td>
-                        </tr>
-                    <% }); %>
-                <% } %>
-                <% if (UM_Pod_List[0] && UM_Pod_List[0].kind) {%>
-                    <% UM_Pod_List.forEach(function(UM_Pod_List) { %>
-                        <tr>
-                            <td>um</td>
-                            <td><%= UM_Pod_List.kind %></td>
-                            <td><%= UM_Pod_List.name %></td>
-                            <td><%= UM_Pod_List.namespace %> </td>
-                        </tr>
-                    <% }); %>
-                <% } %>
-                <% if (CHULA_Pod_List[0] && CHULA_Pod_List[0].kind) {%>
-                    <% CHULA_Pod_List.forEach(function(CHULA_Pod_List) { %>
-                        <tr>
-                            <td>chula</td>
-                            <td><%= CHULA_Pod_List.kind %></td>
-                            <td><%= CHULA_Pod_List.name %></td>
-                            <td><%= CHULA_Pod_List.namespace %> </td>
-                        </tr>
-                    <% }); %>
-                <% } %>
-            </table>
-            <br>
-        </div>
-        <hr>
+                <div id="new-workload-div" class="w3-container">
+                    <hr style="height:3px;color:gray;background-color:#ff1a75">
+                    <p class="w3-section w3-round w3-panel w3-center w3-xlarge w3-text-white" style="background-color:#3399ff;color:white;">Create New Workload (Pod, Deployment, Service)</p>
+                    <form id="deployForm" name="deployForm"
+                          action="<%= post_url %>"
+                          method="post"
+                          enctype="multipart/form-data"
+                          onsubmit="return validateForm()"
+                          target="_blank">
+                        <table>
+                            <tr>
+                                <td class="w3-padding">
+                                    <label for="cluster">Select Cluster (Running):</label>
+                                    <select id="cluster" name="cluster">
+                                        <option value="chula">CHULA-Thailand</option>
+                                        <option value="gist" selected>GIST-Korea</option>
+                                        <option value="um">UM-Malaysia</option>
+                                    </select>
+                                </td>
+                                <td class="w3-padding">
+                                    <label for="workload_type">Select Workload Type:</label>
+                                    <select id="workload_type" name="workload_type">
+                                        <option value="pod" selected>Pod</option>
+                                        <option value="deployment">Deployment</option>
+                                        <option value="service">Service</option>
+                                    </select>
+                                </td>
+                                <td class="w3-padding">
+                                    <label for="yaml">Select YAML File:</label>
+                                    <input type="file" id="yaml" name="yaml" required>
+                                </td>
+                                <td>
+                                    <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
+                                </td>
+                            </tr>
+                        </table>
+                        <input id="token" name="token" type="hidden" value="<%= token %>">
+                        <br><br><br>
+                    </form>
 
-        <div class="w3-container">
-            <h4 style="color: blue">Create new Deployment (Pod, Deployment, Service)</h4>
-            <form id="deployForm" name="deployForm"
-                  action="<%= pods_post_url %>>"
-                  method="post" enctype="multipart/form-data" target="_blank" >
-                <label for="cluster">Select Deployment Cluster (Running):</label>
-                <select id="cluster" name="cluster">
-                    <option value="chula">CHULA-Thailand</option>
-                    <option value="gist" selected>GIST-Korea</option>
-                    <option value="um">UM-Malaysia</option>
-                </select>
-                <br><br>
-                <label for="yaml">Select YAML File:</label>
-                <input type="file" id="yaml" name="yaml" required>
-                <input id="userid" name="userid" type="hidden" value="<%= user.id %>">
-                <br><br><br>
-                <input class="w3-button w3-dark-grey" type="submit" value="Deploy">
-            </form>
-        </div>
-    </div>
+                    <p id="post_url" style="display:none"><%= post_url %></p>
+                </div>
+            </div>
     <% } %>
     <% } %>
 
@@ -168,20 +240,71 @@
             overlayBg.style.display = "none";
         }
 
-        /*function validateForm() {
-            var yaml = document.forms["deplyForm"]["yaml"].value;
-            if (yaml == "" || yaml == null) {
-                alert("Yaml file must be selected.");
-                return false;
-            }
-            alert("Yaml file must be selected." + document.getElementById('userid').value);
-        }*/
+        //Create new workload
+        function validateForm() {
+            const post_url = document.getElementById("post_url").innerText;
+            const token = document.forms["deployForm"]["token"].value;
+            const cluster_id = document.forms["deployForm"]["cluster"].value;
+            const workload_type = document.forms["deployForm"]["workload_type"].value;
 
-        /*let form = document.getElementById("deployForm");
-        form.addEventListener("submit", (e) => {
-          e.preventDefault();
-          alert("Deployment request submitted successfully!");
-        });*/
+            if (token == "" || token == null) {
+                alert("User token is missing.");
+                return false;
+            } else {
+                alert("New workload request sent to the server for User");
+            }
+
+            document.getElementById("deployForm").action = post_url + "/" + workload_type.trim() + "?cluster=" + cluster_id + "&token=" + token;
+            //window.location.href = post_url + "?cluster=" + cluster_id + "&userid=" + user_id;
+        }
+
+        //Populate admin select list
+        function populate_admin_list(){
+            //var admins = [{"email":"kittipat.sae@gmail.com","name":"Kittipat Saengkaenpetch","role":"admin","admin":null,"created":"2021-04-10T10:09:27.000Z","updated":"2021-04-10T10:42:25.000Z"},{"email":"natt.visavarungroj@gmail.com","name":"Natt Visavarungroj","role":"admin","admin":null,"created":"2021-04-10T10:44:02.000Z","updated":"2021-04-10T10:44:02.000Z"},{"email":"usman@smartx.kr","name":"Muhammad Usman","role":"admin","admin":null,"created":"2021-04-10T10:42:25.000Z","updated":"2021-04-10T10:42:39.000Z"}]
+            var admins = ""
+            var ele = document.getElementById('admin');
+            for (var i = 0; i < admins.length; i++) {
+                // POPULATE SELECT ELEMENT WITH JSON.
+                ele.innerHTML = ele.innerHTML +
+                    '<option value="' + admins[i]['email'] + '">' + admins[i]['name'] + '</option>';
+            }
+        }
+
+        //Sendmail to authorize new user
+        function validateAuthorizeForm() {
+            const post_url = document.getElementById("post_url_sendmail").innerText;
+            const token = document.forms["authorizeForm"]["token"].value;
+            const admin_user = document.forms["authorizeForm"]["admin"].value;
+
+            if (admin_user == "" || admin_user == null) {
+                alert("Admin User is not selected.");
+                return false;
+            } else {
+                alert("Authentication request sent to the selected admin. You will get notified when your request is accepted.");
+            }
+        }
+
+        //Delete existing workload
+        function deleteRow(r) {
+            //var i = r.parentNode.parentNode.rowIndex;
+            const token = document.forms["deployForm"]["token"].value;
+            const post_url = document.getElementById("post_url").innerText;
+
+            const row = r.parentNode.parentNode;
+            const workload = row.querySelector('td').innerHTML;
+            const cluster = row.querySelector('td:nth-child(3)').innerHTML;
+            const workload_type = row.querySelector('td:nth-child(4)').innerHTML.toLowerCase();
+
+            const delete_url = post_url + "/" + workload_type.trim() + "?cluster=" + cluster + "&token=" + token + "&name=" + workload;
+
+            // Call Backend API
+            fetch(delete_url, {method: 'DELETE'})
+                .then(res => res.json())
+                .then(res => console.log(res))
+
+            // Remove from the HTML table
+            document.getElementById("workloadsTable").deleteRow(row.rowIndex);
+        }
 
     </script>
 
