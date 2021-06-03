@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const router = express.Router();
 
 const jwt = require('jsonwebtoken')
-const secret = "Removed due to security reason. Need to be added.";
+const secret = "Value is removed for security reason";
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
@@ -20,7 +20,8 @@ router.get('/', (req, res, next) => {
     }
 
     if (user) {
-        console.log('[INFO] User Info from Social Platform' + user)
+        console.log('[INFO] User Info from Social Platform')
+        console.log(user)
 
         const obj = {"name": user.displayName, "email": user.emails[0].value}
         const token = jwt.sign(obj, secret, {expiresIn: 60 * 60})
@@ -29,7 +30,8 @@ router.get('/', (req, res, next) => {
         fetch(user_info_url)
             .then(response => response.json())
             .then(is_authorized_json => {
-                console.log('[INFO] User Info from Authorization database' + is_authorized_json)
+                console.log('[INFO] User Info from Authorization database')
+                console.log(is_authorized_json)
 
                 if (is_authorized_json.role == 'user' || is_authorized_json.role == 'admin') {
                     console.log("[INFO] User is Logged in and Authorized")
@@ -38,6 +40,7 @@ router.get('/', (req, res, next) => {
                     let pods_get_base_url = backend_api_base_url + '/v3/pod?token=' + token + '&limit=100';
                     let deployments_get_base_url = backend_api_base_url + '/v3/deployment?token=' + token + '&limit=100';
                     let services_get_base_url = backend_api_base_url + '/v3/service?token=' + token + '&limit=100';
+                    let ingress_get_base_url = backend_api_base_url + '/v3/ingress?token=' + token + '&limit=100';
 
                     let post_url = backend_api_base_url + '/v3';
 
@@ -63,16 +66,23 @@ router.get('/', (req, res, next) => {
                                                 .then(USER_Service_List => {
                                                     console.log("[INFO] User Services");
                                                     console.log(USER_Service_List);
-                                                    res.render('home', {
-                                                        user: user,
-                                                        token: token,
-                                                        is_authorized: true,
-                                                        Cluster_List: cluster_json,
-                                                        USER_Pod_List: USER_Pod_List,
-                                                        USER_Deployment_List: USER_Deployment_List,
-                                                        USER_Service_List: USER_Service_List,
-                                                        post_url: post_url
-                                                    });
+                                                    fetch(ingress_get_base_url)
+                                                        .then(response => response.json())
+                                                        .then(USER_Ingress_List => {
+                                                            console.log("[INFO] User Ingress Ports");
+                                                            console.log(USER_Ingress_List);
+                                                            res.render('home', {
+                                                                user: user,
+                                                                token: token,
+                                                                is_authorized: true,
+                                                                Cluster_List: cluster_json,
+                                                                USER_Pod_List: USER_Pod_List,
+                                                                USER_Deployment_List: USER_Deployment_List,
+                                                                USER_Service_List: USER_Service_List,
+                                                                USER_Ingress_List: USER_Ingress_List,
+                                                                post_url: post_url
+                                                            });
+                                                        })
                                                 })
                                         })
                                 })

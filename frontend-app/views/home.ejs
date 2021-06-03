@@ -167,6 +167,18 @@
                                 </tr>
                             <% }); %>
                         <% } %>
+                        <% if (USER_Ingress_List[0] && USER_Ingress_List[0].cluster) { %>
+                            <% USER_Ingress_List.forEach(function(USER_Ingress_List) { %>
+                                <tr>
+                                    <td><%= USER_Ingress_List.name %></td>
+                                    <td><%= USER_Ingress_List.created %> </td>
+                                    <td><%= USER_Ingress_List.cluster %></td>
+                                    <td><%= USER_Ingress_List.status.kind %> </td>
+                                    <td><%= USER_Ingress_List.status.namespace %> </td>
+                                    <td><input class="w3-button w3-red w3-text-white fa fa-trash" type="button" value="Delete" onclick="deleteRow(this)"></td>
+                                </tr>
+                            <% }); %>
+                        <% } %>
                     </table>
                 </div>
 
@@ -184,8 +196,9 @@
                                 <td class="w3-padding">
                                     <label for="cluster">Select Cluster (Running):</label>
                                     <select id="cluster" name="cluster">
+                                        <option value="optimal" selected>Best Matching Cluster</option>
                                         <option value="chula">CHULA-Thailand</option>
-                                        <option value="gist" selected>GIST-Korea</option>
+                                        <option value="gist">GIST-Korea</option>
                                         <option value="um">UM-Malaysia</option>
                                     </select>
                                 </td>
@@ -195,6 +208,7 @@
                                         <option value="pod" selected>Pod</option>
                                         <option value="deployment">Deployment</option>
                                         <option value="service">Service</option>
+                                        <option value="ingress">Ingress</option>
                                     </select>
                                 </td>
                                 <td class="w3-padding">
