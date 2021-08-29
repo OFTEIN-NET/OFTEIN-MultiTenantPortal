@@ -146,8 +146,8 @@ exports.plugin = {
         };
 
         // cluster #todo
-        // const currentstatuscluster = (cluster, dev = false) => clusters[cluster].coreapi
-        //     .listComponentStatus()
+        const currentstatuscluster = (cluster, dev = false) => clusters[cluster].coreapi
+            .listComponentStatus()
         const currentresourcecluster = (cluster, dev = false) => clusters[cluster].coreapi
             .listNamespacedResourceQuota(clusters[cluster].namespace)
         const listnode = (cluster, dev = false) => clusters[cluster].coreapi
@@ -267,6 +267,7 @@ exports.plugin = {
         }
 
         const parseValue = (val) => {
+            if (typeof val != "string") return parseFloat(val);
             if (val.indexOf("Gi") != -1) return parseFloat(val)*1024*1024;
             else if (val.indexOf("G") != -1) return parseFloat(val)*1000*1000;
             else if (val.indexOf("Mi") != -1) return parseFloat(val)*1024;
@@ -443,6 +444,14 @@ exports.plugin = {
                 },
                 method: "GET",
                 handler: (request, h) => getresourcestatus()
+            },
+            {
+                path: "/getresource/{cluster}",
+                options: {
+                    auth: false
+                },
+                method: "GET",
+                handler: (request, h) => getresource(request.params.cluster)
             },
             {
                 path: "/info",
@@ -631,7 +640,7 @@ exports.plugin = {
                         }),
                         query: Joi.object({
                             token: Joi.string().required(),
-                            cluster: Joi.string().valid(...Object.keys(clusters)),
+                            cluster: Joi.string().valid(...Object.keys(clusters), "optimal"),
                             leftmost: Joi.boolean().default(false)
                         })
                     },
@@ -652,7 +661,9 @@ exports.plugin = {
                         const yamlfile = Yaml.safeLoad(FS.readFileSync(yaml.path, 'utf8'));
                         const name = yamlfile.metadata.name;
 
-                        let cluster = request.query.cluster;
+                        if (request.query.cluster == "optimal") delete request.query.cluster;
+
+                        let cluster;
 
                         if (request.query.cluster) {
                             cluster = request.query.cluster;
