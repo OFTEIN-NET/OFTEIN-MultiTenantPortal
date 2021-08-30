@@ -10,9 +10,7 @@ exports.plugin = {
         mailconfig = require('./../configs/mailconfig');
 
         let iotcloudservetransport = nodemailer.createTransport({
-            host: mailconfig.host,
-            port: mailconfig.port,
-            secure: false,
+            service: "gmail",
             auth: {
                 user: mailconfig.username,
                 pass: mailconfig.password,
